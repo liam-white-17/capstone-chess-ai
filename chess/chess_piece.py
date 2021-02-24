@@ -1,6 +1,6 @@
 from abc import abstractmethod
-
-
+from chess.move import Move
+from util import is_valid,is_capture
 class Piece:
     """
     NOT IMPLEMENTED
@@ -27,15 +27,43 @@ class Piece:
 class Pawn(Piece):
     name = 'P'
     def get_valid_moves(self,board,grid_loc):
-        #TODO
-        return None
+        #Pawn moves for rules are different
+        moves = []
+        rank,file=grid_loc
+        direction = 1 if self.color else -1
+        origin_row = 1 if self.color else 6
+        if board.square_at(rank+direction,file).get_piece() is None:
+            moves.append(Move(board=board,src=(rank,file),dest=(rank+direction,file)))
+            if rank == origin_row and board.square_at(rank+(direction*2),file).get_piece() is None:
+                moves.append((Move(board=board,src=(rank,file),dest=(rank+direction*2,file))))
+        if is_capture(rank+direction,file-1,board,self.color):
+            moves.append(Move(board=board,src=(rank,file),dest=(rank+direction,file-1)))
+        if is_capture((rank+direction,file+1,board,self.color)):
+            moves.append(Move(board=board,src=(rank,file),dest=(rank+direction,file-1)))
+        return moves
+
 
 
 class Knight(Piece):
     name = 'H'
     def get_valid_moves(self,board,grid_loc):
         #TODO
-        return None
+        moves=[]
+        rank,file=grid_loc
+        indices=[
+            (rank+2,file+1),
+            (rank+2,file-1),
+            (rank-2,file+1),
+            (rank-2,file-1),
+            (rank+1,file+2),
+            (rank+1,file-2),
+            (rank-1,file+2),
+            (rank-1,file-2)
+        ]
+        for r,f in indices:
+            if is_valid(r,f,board,self.color):
+                moves.append(Move(board=board,src=(rank,file),dest=(r,f)))
+        return moves
 
 
 class Bishop(Piece):
