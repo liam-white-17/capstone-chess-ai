@@ -1,16 +1,27 @@
+import re
+from chess.chess_utils import *
+
 class Move:
     """
     A class to represent the act of moving a piece.
     """
 
-    def __init__(self, board, src, dest, **kwargs):
+    def __init__(self, board, src, dest, color, **kwargs):
         self.src = src
         self.dest = dest
         self.piece_moved = board.square_at(*src).get_piece()
         self.piece_captured = board.square_at(*dest).get_piece()
+        self.color = color
         # TODO add handling of special moves (e.g. check/checkmate, castling, pawn promotion)
 
     def __repr__(self):
+        out = f'{self.piece_moved}{convert_int_to_rank_file(self.src)}'
+        out += ('x' if self.piece_captured is not None else '')
+        out += f'{convert_int_to_rank_file(self.dest)}'
+        return out
+
+
+    def grid_repr(self):
         output = f'{self.piece_moved}{self.src}==>{self.dest}'
         if self.piece_captured is not None:
             output += f'x{self.piece_captured}'
@@ -28,5 +39,20 @@ class Move:
         pass
 
     @staticmethod
-    def create_move_from_str(board, str):
-        """Creates a move based on standard algebraic notation for chess moves"""
+    def create_move_from_str(board, str:str,player_to_move):
+        """Creates a move from a string that's (loosely) based on standard algebraic notation for chess moves"""
+        regex = re.compile('[phbrqkPHBRQK][abcdefgh][1-8]x?[abcdefgh][1-8]')
+        if regex.fullmatch(str) is None:
+            raise ValueError(f'{str} does not match accepted chess notation')
+
+        str.replace('x','')
+        #expected_piece_type = get_piece_type_from_string(str[0])
+
+        src = convert_rank_file_to_int(str[1:3])
+        dest = convert_rank_file_to_int(str[3:5])
+        #actual_piece = board.square_at(src).get_piece()
+        # if not isinstance(actual_piece,expected_piece_type):
+        #     raise ValueError(f'Piece at {convert_int_to_rank_file(src)} is not of type {expected_piece_type}')
+        return Move(board,src,dest,player_to_move)
+
+

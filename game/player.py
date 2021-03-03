@@ -9,3 +9,4 @@ class Player:
     @abstractmethod
     def get_move(self,board):
         pass
+
