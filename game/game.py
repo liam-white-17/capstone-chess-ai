@@ -4,6 +4,7 @@ from chess.game_board import Board
 from chess.chess_utils import Color, convert_int_to_rank_file as xy_to_rf, convert_rank_file_to_int as rf_to_xy, \
     is_check, is_checkmate, no_valid_moves
 from chess.move import Move
+from ai.agent import *
 
 
 class ChessGame:
@@ -16,6 +17,10 @@ class ChessGame:
 
         self.white_AI = None
         self.black_AI = None
+        if args['white-agent'] is not None:
+            self.white_AI = get_agent_from_string(args['white-agent'])(color=Color.WHITE)
+        if args['black-agent'] is not None:
+            self.black_AI = get_agent_from_string(args['black-agent'])(color=Color.BLACK)
 
         self.player_to_move = Color.WHITE
 
@@ -47,16 +52,38 @@ class ChessGame:
 
 
     def get_next_move(self):
+        if self.player_to_move == Color.WHITE and self.white_AI is not None:
+            move = self.white_AI.get_next_move(self.board)
+            print(f'White move: {move}')
+            return move
+        if self.player_to_move == Color.BLACK and self.black_AI is not None:
+            move = self.black_AI.get_next_move(self.board)
+            print(f'Black move:{move}')
+            return move
+
         valid_move_recieved = False
         while not valid_move_recieved:
             print()
-            cli_input = input('Please enter the move you would like to make (for formatting options, type -h):\n')
+
+            cli_input = input("Please enter the move you would like to make.\nFor formatting options, type -h"+
+            "\nTo see a list of all valid moves, type -m\n""")
             if cli_input == '-h':
                 print("""Moves should be of the format <piece><original rank><original file><new rank><new file>.
                 For instance, to move a white pawn from c2 to c4, you would type 'Pc2c4'.
                 To move a black knight from g8 to capture a piece at f6, type 'Hg8xf6'.
                 The 'x' for capturing is not required, but can be included. 
                 """)
+            elif cli_input in ['-m','--moves']:
+                all_moves = []
+                pieces = self.board.get_pieces(self.player_to_move)
+                for piece, loc in pieces:
+                    curr_moves = piece.get_valid_moves(self.board,loc)
+                    for move in curr_moves:
+                        successor = self.board.create_successor_board(move)
+                        if not is_check(successor,self.player_to_move):
+                            all_moves.append(move)
+                for valid_move in all_moves:
+                    print(valid_move,end=', ')
             elif cli_input in ['-e','exit','--exit']:
                 sys.exit(0)
             else:
@@ -94,7 +121,17 @@ class ChessGame:
         else:
             return self.player_to_move
 
+def get_agent_from_string(agent_name):
+    agents = {'RandomAgent': RandomAgent}
+    try:
 
+        return agents[agent_name]
+    except KeyError as e:
+        print(f'ERROR: invalid AI agent specified. List of accepted agents:',end=' ')
+        for key in agents.keys():
+            print(key,end=' ')
+        print('Exiting...')
+        sys.exit(0)
 def run(args):
     curr_game = ChessGame(**args)
     curr_game.run_game()

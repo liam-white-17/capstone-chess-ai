@@ -1,7 +1,6 @@
 from abc import abstractmethod
-from chess.move import Move
-from chess.chess_utils import is_valid, is_capture, Color
-
+from chess.move import Move,Castle
+from chess.chess_utils import is_valid, is_capture, Color, is_check
 
 class Piece:
     """
@@ -12,8 +11,12 @@ class Piece:
 
     def __init__(self, **kwargs):
         self.color = Color.WHITE if kwargs['is_white'] else Color.BLACK
-
-        pass
+        self.row = None
+        self.col = None
+        if 'loc' in kwargs:
+            row,col = kwargs['loc']
+            self.row = row
+            self.col = col
 
     @abstractmethod
     def get_valid_moves(self, board, grid_loc):
@@ -24,13 +27,14 @@ class Piece:
     def get_color(self):
         """Returns true if piece is on the white team, false if black"""
         return self.color
+    def set_loc(self,loc):
+        self.row,self.col = loc
 
     def __repr__(self):
         return self.to_char()
 
     def __str__(self):
         return self.to_char()
-
     def to_char(self):
         return self.name.upper() if self.color == Color.WHITE else self.name.lower()
     def to_unicode(self):
@@ -134,6 +138,28 @@ class King(Piece):
         for r, f in indices:
             if is_valid(r, f, board, self.color):
                 moves.append(Move(board=board, src=(rank, file), dest=(r, f),color=self.color))
+        if not self.has_moved and not is_check(board,self.color):
+            queenside_rook_loc = (0,0) if self.color else (7,0)
+            kingside_rook_loc = (0,7) if self.color else (7,7)
+            queenside_rook = board.piece_at(*queenside_rook_loc)
+            kingside_rook = board.piece_at(*kingside_rook_loc)
+            if queenside_rook is not None and not queenside_rook.has_moved:
+                can_move_queenside = True
+                for c in range(file-1,0,-1):
+                    if board.piece_at(queenside_rook_loc[0],c) is not None:
+                        can_move_queenside = False
+                        break
+                if can_move_queenside:
+                    moves.append(Castle(board,self.color,is_queenside=True))
+            if kingside_rook is not None and not kingside_rook.has_moved:
+                can_move_kingside = True
+                for c in range(file+1,7):
+                    if board.piece_at(kingside_rook_loc[0],c) is not None:
+                        can_move_kingside = False
+                        break
+                if can_move_kingside:
+                    moves.append(Castle(board,self.color,is_queenside=False))
+
         return moves
 
 

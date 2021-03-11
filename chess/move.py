@@ -55,4 +55,20 @@ class Move:
         #     raise ValueError(f'Piece at {convert_int_to_rank_file(src)} is not of type {expected_piece_type}')
         return Move(board,src,dest,player_to_move)
 
+class Castle(Move):
+
+    def __init__(self,board,color,is_queenside):
+        queenside_rook_loc = (0, 0) if color else (7, 0)
+        kingside_rook_loc = (0, 7) if color else (7, 7)
+        king_loc = (0,4) if color else (7,4)
+        new_king_loc = (king_loc[0],king_loc[1]+(2 if is_queenside else -2))
+        Move.__init__(self,board,src=king_loc,dest=new_king_loc,color=color)
+        self.is_queenside = is_queenside
+        self.rook_src = queenside_rook_loc if is_queenside else kingside_rook_loc
+        self.rook_dest = (self.rook_src[0],self.rook_src[1]+(-2 if is_queenside else 2))
+
+    def __repr__(self):
+        return '0-0-0' if self.is_queenside else '0-0'
+
+
 
