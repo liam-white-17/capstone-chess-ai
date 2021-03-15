@@ -9,6 +9,9 @@ EXAMPLES:   (1) python chess.py
             (2) python chess.py -w RandomAgent 
             OR  python chess.py --white-agent RandomAgent
             - starts a new game with a human playing for black and a randomly acting AI playing for white
+            (3) python chess.py -b RandomAgent
+            OR python chess.py --black-agent RandomAgent
+            - starts a new game as in (2) except white is played by human and black is played by AI
             (3) python chess.py --load_file path/to/file.txt 
             - loads a previously played chess game stored in a text file
              

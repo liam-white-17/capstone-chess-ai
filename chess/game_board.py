@@ -4,11 +4,13 @@ import io,copy
 
 class Board:
 
-    def __init__(self):
+    def __init__(self,dim=8):
+        """Constructor"""
         self.grid = list()
-        for r in range(0, 8):
+        self.dim = dim
+        for r in range(0, dim):
             self.grid.append(list())
-            for c in range(0, 8):
+            for c in range(0, dim):
                 self.grid[r].append(GridSpace((r, c)))
         self.king_locations = {Color.WHITE:None,Color.BLACK:None}
     def new_game(self):
@@ -52,7 +54,8 @@ class Board:
     def create_successor_board(self, move):
         """Returns a new game board, identical to this instance except one piece has been moved (as specified by the move
         parameter, which is an instance of the Move class.)
-        Used by AI agent to determine effects of possible moves, as well as in checking whether the king is in check"""
+        Used by AI agent to determine effects of possible moves, as well as in checking whether the king is in check.
+        This method does not check the validity of any moves passed to it (that is handled outside of this method)."""
         temp=self.__deepcopy__()
         src,dest=move.src,move.dest
         if src == self.king_locations[move.color]:
@@ -60,8 +63,15 @@ class Board:
         temp.square_at(*src).remove_piece()
         if not temp.square_at(*dest).is_empty():
             temp.square_at(*dest).remove_piece()
-        temp.square_at(*dest).add_piece(move.piece_moved)
+        temp.square_at(*dest).add_piece(move.piece_moved.__deepcopy__())
         temp.square_at(*dest).piece.has_moved=True
+        if isinstance(move,Castle):
+            rook_src, rook_dest = move.rook_src,move.rook_dest
+            temp.square_at(*rook_dest).add_piece(temp.piece_at(*rook_src))
+            temp.square_at(*rook_src).remove_piece()
+        if isinstance(move,PawnPromotion):
+            temp.square_at(*dest).remove_piece()
+            temp.square_at(*dest).add_piece(move.new_piece)
 
         return temp
 
@@ -93,8 +103,7 @@ class Board:
         return output.lstrip('\n')
     def display_board(self,chars_only=True):
         """Displays board in standard chess format (i.e. with ranks and files) as opposed to the (x,y) coordinate system
-        used in implementation."""
-        separator = ' ' if chars_only else '  '
+        used in implementation. This is used in the CLI output format of the game"""
         output = "\t a b c d e f g h\n"
 
         for row in range(7, -1, -1):
@@ -131,17 +140,20 @@ class Board:
                     board.king_locations[color] = (7-rank,file)
         return board
     def __deepcopy__(self, memodict={}):
+        """As titled; creates deep copy of the chess board"""
         board = Board()
         for row in range(0,8):
             for col in range(0,8):
                 piece = self.square_at(row,col).get_piece()
-                board.square_at(row,col).add_piece(piece)
+                board.square_at(row,col).add_piece(piece.__deepcopy__() if piece is not None else None)
         board.king_locations[Color.WHITE] = self.king_locations[Color.WHITE]
         board.king_locations[Color.BLACK] = self.king_locations[Color.BLACK]
         return board
 
 
 class GridSpace:
+    """A class used to represent a cell on the chess board. Though not particularly useful now, this class is implemented
+    for UI considerations"""
     def __init__(self, loc):
         r, c = loc
         self.loc = loc

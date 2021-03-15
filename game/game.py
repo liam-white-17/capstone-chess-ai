@@ -1,5 +1,6 @@
 import sys
-from game.player import Player
+
+from chess import chess_piece
 from chess.game_board import Board
 from chess.chess_utils import Color, convert_int_to_rank_file as xy_to_rf, convert_rank_file_to_int as rf_to_xy, \
     is_check, is_checkmate, no_valid_moves
@@ -27,6 +28,7 @@ class ChessGame:
         self.no_graphics = True  # TODO add command-line options to enable UI (once UI is completed)
         self.stdin = sys.stdin
         self.stdout = sys.stdout
+        self.turn_num = 1
 
     def run_game(self):
         game_over = False
@@ -34,6 +36,7 @@ class ChessGame:
         print('Launching new game of chess...')
 
         while not game_over:
+            print(f'Beginning turn {self.turn_num} for {self.get_player_to_move(as_string=True)}')
             print('Current Board state:\n')
             print(self.board.display_board())
             if is_checkmate(self.board,self.player_to_move):
@@ -71,7 +74,10 @@ class ChessGame:
                 print("""Moves should be of the format <piece><original rank><original file><new rank><new file>.
                 For instance, to move a white pawn from c2 to c4, you would type 'Pc2c4'.
                 To move a black knight from g8 to capture a piece at f6, type 'Hg8xf6'.
-                The 'x' for capturing is not required, but can be included. 
+                The 'x' for capturing is not required, but can be included.
+                If the move would move a pawn to the end of the board, append an equals sign followed by the piece"""+\
+                """you would like to promote the pawn to (e.x. Pc7c8=Q)
+                Castling is denoted by 0-0 (kingside) or 0-0-0 (queenside). 
                 """)
             elif cli_input in ['-m','--moves']:
                 all_moves = []
@@ -88,7 +94,7 @@ class ChessGame:
                 sys.exit(0)
             else:
                 try:
-                    move = Move.create_move_from_str(self.board, cli_input, self.player_to_move)
+                    move = chess_piece.create_move_from_str(self.board, cli_input, self.player_to_move)
                     return move
                 except ValueError as e:
                     print(f'Invalid input recieved: {e}')
@@ -104,15 +110,22 @@ class ChessGame:
             print(f'Invalid input received: wrong color of piece at {xy_to_rf(src)}')
         valid_moves = piece_to_move.get_valid_moves(self.board, src)
         if move not in valid_moves:
-            print(f'Invalid input received: piece at {xy_to_rf(src)} cannot legally move to {xy_to_rf(dest)}')
+            print(f'Invalid input received: piece at {xy_to_rf(src)} cannot legally move to {xy_to_rf(dest)},'+\
+            'or you aren\'t specifying the piece type in a pawn promotion.')
             return
         successor = self.board.create_successor_board(move)
         if is_check(successor, self.player_to_move):
             print(f'Invalid input received: move from {xy_to_rf(src)} to {xy_to_rf(dest)} ' +
                   f'would put {self.get_player_to_move(as_string=True)} in check.')
             return
+        if isinstance(successor.piece_at(*move.dest),chess_piece.Pawn) and move.dest[0] in (0,8):
+            print(f'Invalid input recieved: pawn in illegal location after move processed.')
+            print('If this move puts a pawn at the end of the board, make sure you specify the promotion type')
+            return
         self.board = successor
         self.player_to_move = ~self.player_to_move
+        if self.player_to_move:
+            self.turn_num += 1
 
 
     def get_player_to_move(self, as_string=False):

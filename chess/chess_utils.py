@@ -50,7 +50,7 @@ def is_check(board,player_to_move):
     pieces = board.get_pieces(~player_to_move)
     king_loc = board.king_locations[player_to_move]
     for piece,loc in pieces:
-        for move in piece.get_valid_moves(board,loc):
+        for move in piece.get_valid_moves(board,loc,full_recursion=False):
             if move.dest == king_loc:
                 return True
     return False
