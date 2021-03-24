@@ -8,14 +8,23 @@ class MoveTest(unittest.TestCase):
         move_expr = 'Pa2a4'
         expected = Move(board,src=(1,0),dest=(3,0),color=Color.WHITE)
 
-        actual = Move.create_move_from_str(board,move_expr,Color.WHITE)
+        actual = create_move_from_str(board,move_expr,Color.WHITE)
         self.assertEqual(expected,actual)
         try:
             move_expr = 'this should fail!'
-            move = Move.create_move_from_str(board,move_expr,Color.WHITE)
+            move = create_move_from_str(board,move_expr,Color.WHITE)
             self.fail('bad move did not throw exception')
         except:
             pass
+    def test_get_all_moves(self):
+        board = Board.load_from_file('test_data/sample_board1.txt')
+        move_strs = ['kb1a1','kb1b2','kb1a2','kb1c1','kb1c2']
+        expected = [create_move_from_str(board,move_str,Color.WHITE) for move_str in move_strs]
+        actual = board.get_all_moves(Color.WHITE)
+        for move in actual:
+            self.assertIn(move,expected)
+
+
 
 
 if __name__ == '__main__':

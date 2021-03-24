@@ -48,9 +48,9 @@ def convert_int_to_rank_file(loc):
 
 def is_check(board,player_to_move):
     pieces = board.get_pieces(~player_to_move)
-    king_loc = board.king_locations[player_to_move]
-    for piece,loc in pieces:
-        for move in piece.get_valid_moves(board,loc,full_recursion=False):
+    king_loc = board.get_king_location(player_to_move)
+    for piece in pieces:
+        for move in piece.get_valid_moves(board,(piece.row,piece.col),full_recursion=False):
             if move.dest == king_loc:
                 return True
     return False
@@ -59,8 +59,10 @@ def is_checkmate(board,player_to_move):
 
 def no_valid_moves(board,player_to_move):
     pieces = board.get_pieces(player_to_move)
-    for piece,loc in pieces:
-        for move in piece.get_valid_moves(board,loc):
+    if len(pieces) == 1 and len(board.get_pieces(~player_to_move)) == 1:
+        return True
+    for piece in pieces:
+        for move in piece.get_valid_moves(board,(piece.row,piece.col)):
             successor = board.create_successor_board(move)
             if not is_check(successor,player_to_move):
                 return False

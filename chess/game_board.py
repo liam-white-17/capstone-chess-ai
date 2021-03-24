@@ -39,17 +39,26 @@ class Board:
 
         return self
 
-    def get_pieces(self, color):
-        """Returns all the pieces of a given color.
-        Pieces are stored in tuples containing the piece and their coordinates.
-        The color parameter is a boolean variable--true for white, false for black"""
+    # def get_pieces(self, color):
+    #     """Returns all the pieces of a given color.
+    #     Pieces are stored in tuples containing the piece and their coordinates.
+    #     The color parameter is a boolean variable--true for white, false for black"""
+    #     pieces = []
+    #     for rank in range(0, 8):
+    #         for file in range(0, 8):
+    #             piece = self.grid[rank][file].get_piece()
+    #             if piece is not None and piece.get_color() == color:
+    #                 pieces.append((piece, (rank, file)))
+    #     return pieces
+    def get_pieces(self,color):
         pieces = []
         for rank in range(0, 8):
             for file in range(0, 8):
                 piece = self.grid[rank][file].get_piece()
                 if piece is not None and piece.get_color() == color:
-                    pieces.append((piece, (rank, file)))
+                    pieces.append(piece)
         return pieces
+
 
     def create_successor_board(self, move):
         """Returns a new game board, identical to this instance except one piece has been moved (as specified by the move
@@ -74,12 +83,28 @@ class Board:
             temp.square_at(*dest).add_piece(move.new_piece)
 
         return temp
-
+    def get_king_location(self,color):
+        for r in range(0,8):
+            for c in range(0,8):
+                piece = self[(r,c)].get_piece()
+                if piece is not None and piece.get_color() == color and isinstance(piece,King):
+                    return (r,c)
+        raise Exception("Cannot find King!")
     def __getitem__(self, item):
         return self.grid[item[0]][item[1]]
     def square_at(self, row, col):
         """A method for returning a GridSpace based on numeric indexing"""
         return self.grid[row][col]
+    def get_all_moves(self,color,no_moves_to_check=True):
+        all_moves = []
+        pieces = self.get_pieces(color)
+        for piece in pieces:
+            curr_moves = piece.get_valid_moves(self, (piece.row,piece.col))
+            for move in curr_moves:
+                successor = self.create_successor_board(move)
+                if not no_moves_to_check or not is_check(successor, color):
+                    all_moves.append(move)
+        return all_moves
     def __eq__(self, other):
         if not isinstance(other,Board):
             return False
@@ -104,13 +129,13 @@ class Board:
     def display_board(self,chars_only=True):
         """Displays board in standard chess format (i.e. with ranks and files) as opposed to the (x,y) coordinate system
         used in implementation. This is used in the CLI output format of the game"""
-        output = "\t a b c d e f g h\n"
+        output = "\t  a  b  c  d  e  f  g  h\n"
 
         for row in range(7, -1, -1):
             output_row = str(row+1)+'\t'
             for col in range(0, 8):
                 piece = self.grid[row][col].get_piece()
-                output_row += ' ' + ('*' if piece is None else (piece.to_char() if chars_only else piece.to_unicode()))
+                output_row += '  ' + ('*' if piece is None else (piece.to_char() if chars_only else piece.to_unicode()))
             output += '\n' + output_row.lstrip(' ')
         return output.lstrip('\n')
     @staticmethod
@@ -134,7 +159,7 @@ class Board:
                 chr = curr_row[file]
                 piece_type = get_piece_type_from_string(chr)
                 if piece_type is not None:
-                    board.grid[7 - rank][file].add_piece(piece_type(is_white=(chr == chr.upper())))
+                    board.grid[7 - rank][file].add_piece(piece_type(is_white=(chr == chr.upper()),loc=(7-rank,file)))
                 if piece_type == King:
                     color = Color.WHITE if chr.isupper() else Color.BLACK
                     board.king_locations[color] = (7-rank,file)
@@ -172,16 +197,14 @@ class GridSpace:
         """Adds a piece to this position. Throws an exception if a piece is already present."""
         if self.piece is not None:
             raise ValueError(f'Cannot add piece {piece} to {self.loc} because {self.piece} is already present')
+        if piece is None:
+            return
         self.piece = piece
+        self.piece.set_loc(self.loc)
 
     def get_piece(self):
         """Returns the current piece located on this square, or None if there is no piece here"""
         return self.piece
-
-    def set_piece(self,piece):
-        """Replaces current piece (if present) with the piece parameter.
-        Although this method essentially combines the effects of add_piece and remove_piece, it's better practice
-        to use one of the others as"""
 
     def remove_piece(self):
         """Removes the piece stored on the current grid square. Throws an exception if no piece is present"""

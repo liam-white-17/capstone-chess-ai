@@ -15,11 +15,4 @@ class RandomAgent(Agent):
     """Picks next move from randomly available options"""
 
     def get_next_move(self,board):
-        pieces = board.get_pieces(self.color)
-        valid_moves = []
-        for piece, loc in pieces:
-            for move in piece.get_valid_moves(board,loc):
-                successor = board.create_successor_board(move)
-                if not is_check(successor,self.color):
-                    valid_moves.append(move)
-        return random.choice(valid_moves)
+        return random.choice(board.get_all_moves(self.color))

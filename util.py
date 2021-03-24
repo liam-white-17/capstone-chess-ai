@@ -17,4 +17,3 @@ class Stack:
         return len(self.list) == 0
 
 
-

@@ -1,4 +1,4 @@
-import sys
+import sys, time
 
 from chess import chess_piece
 from chess.game_board import Board
@@ -6,6 +6,7 @@ from chess.chess_utils import Color, convert_int_to_rank_file as xy_to_rf, conve
     is_check, is_checkmate, no_valid_moves
 from chess.move import Move
 from ai.agent import *
+from ai.minimax_agent import *
 
 
 class ChessGame:
@@ -37,6 +38,8 @@ class ChessGame:
 
         while not game_over:
             print(f'Beginning turn {self.turn_num} for {self.get_player_to_move(as_string=True)}')
+            # if self.turn_num % 10 == 0:
+            #     time.sleep(1.0)
             print('Current Board state:\n')
             print(self.board.display_board())
             if is_checkmate(self.board,self.player_to_move):
@@ -44,7 +47,8 @@ class ChessGame:
                 game_over = True
                 break
             elif no_valid_moves(self.board,self.player_to_move) and not is_check(self.board,self.player_to_move):
-                print(f'{self.player_to_move} is in stalemate. Match is a draw!')
+                print(f'{self.player_to_move} is either in stalemate or it is no longer possible for either player to win.'+\
+                      ' Match is a draw!')
                 game_over=True
                 break
             elif is_check(self.board,self.player_to_move):
@@ -80,15 +84,7 @@ class ChessGame:
                 Castling is denoted by 0-0 (kingside) or 0-0-0 (queenside). 
                 """)
             elif cli_input in ['-m','--moves']:
-                all_moves = []
-                pieces = self.board.get_pieces(self.player_to_move)
-                for piece, loc in pieces:
-                    curr_moves = piece.get_valid_moves(self.board,loc)
-                    for move in curr_moves:
-                        successor = self.board.create_successor_board(move)
-                        if not is_check(successor,self.player_to_move):
-                            all_moves.append(move)
-                for valid_move in all_moves:
+                for valid_move in self.board.get_all_moves(self.player_to_move):
                     print(valid_move,end=', ')
             elif cli_input in ['-e','exit','--exit']:
                 sys.exit(0)
@@ -135,7 +131,7 @@ class ChessGame:
             return self.player_to_move
 
 def get_agent_from_string(agent_name):
-    agents = {'RandomAgent': RandomAgent}
+    agents = {'RandomAgent': RandomAgent,'PieceValueAgent':PieceValueAgent}
     try:
 
         return agents[agent_name]
