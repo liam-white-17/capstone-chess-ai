@@ -1,5 +1,5 @@
 import re
-from chess.chess_utils import *
+from chess_lib.chess_utils import *
 
 class Move:
     """

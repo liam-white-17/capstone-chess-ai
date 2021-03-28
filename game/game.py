@@ -1,12 +1,13 @@
 import sys, time
-
-from chess import chess_piece
-from chess.game_board import Board
-from chess.chess_utils import Color, convert_int_to_rank_file as xy_to_rf, convert_rank_file_to_int as rf_to_xy, \
+from util import Stack
+from chess_lib import chess_piece
+from chess_lib.game_board import Board
+from chess_lib.chess_utils import Color, convert_int_to_rank_file as xy_to_rf, convert_rank_file_to_int as rf_to_xy, \
     is_check, is_checkmate, no_valid_moves
-from chess.move import Move
+from chess_lib.move import Move
 from ai.agent import *
 from ai.minimax_agent import *
+from os import getcwd
 
 
 class ChessGame:
@@ -19,6 +20,7 @@ class ChessGame:
 
         self.white_AI = None
         self.black_AI = None
+        self.winner = None
         if args['white-agent'] is not None:
             self.white_AI = get_agent_from_string(args['white-agent'])(color=Color.WHITE)
         if args['black-agent'] is not None:
@@ -27,14 +29,16 @@ class ChessGame:
         self.player_to_move = Color.WHITE
 
         self.no_graphics = True  # TODO add command-line options to enable UI (once UI is completed)
-        self.stdin = sys.stdin
-        self.stdout = sys.stdout
+
         self.turn_num = 1
+        self.move_history = Stack()
+
+
 
     def run_game(self):
         game_over = False
         # TODO separate into UI vs command-line run-game types
-        print('Launching new game of chess...')
+        print('Launching new game of chess_lib...')
 
         while not game_over:
             print(f'Beginning turn {self.turn_num} for {self.get_player_to_move(as_string=True)}')
@@ -44,6 +48,7 @@ class ChessGame:
             print(self.board.display_board())
             if is_checkmate(self.board,self.player_to_move):
                 print(f'{self.player_to_move} is in checkmate. {~self.player_to_move} wins!')
+                self.winner = ~self.player_to_move
                 game_over = True
                 break
             elif no_valid_moves(self.board,self.player_to_move) and not is_check(self.board,self.player_to_move):
@@ -60,13 +65,10 @@ class ChessGame:
 
     def get_next_move(self):
         if self.player_to_move == Color.WHITE and self.white_AI is not None:
-            move = self.white_AI.get_next_move(self.board)
-            print(f'White move: {move}')
-            return move
+            return self.white_AI.get_next_move(self.board)
         if self.player_to_move == Color.BLACK and self.black_AI is not None:
-            move = self.black_AI.get_next_move(self.board)
-            print(f'Black move:{move}')
-            return move
+            return self.black_AI.get_next_move(self.board)
+
 
         valid_move_recieved = False
         while not valid_move_recieved:
@@ -96,6 +98,10 @@ class ChessGame:
                     print(f'Invalid input recieved: {e}')
 
     def process_move(self, move):
+        if self.player_to_move == Color.WHITE and self.white_AI is not None:
+            print(f'White move: {move}')
+        if self.player_to_move == Color.BLACK and self.black_AI is not None:
+            print(f'Black move: {move}')
         src = move.src
         dest = move.dest
         piece_to_move = self.board.piece_at(*src)
@@ -104,6 +110,7 @@ class ChessGame:
             return
         if piece_to_move.get_color() != self.player_to_move:
             print(f'Invalid input received: wrong color of piece at {xy_to_rf(src)}')
+            return
         valid_moves = piece_to_move.get_valid_moves(self.board, src)
         if move not in valid_moves:
             print(f'Invalid input received: piece at {xy_to_rf(src)} cannot legally move to {xy_to_rf(dest)},'+\
@@ -131,7 +138,8 @@ class ChessGame:
             return self.player_to_move
 
 def get_agent_from_string(agent_name):
-    agents = {'RandomAgent': RandomAgent,'PieceValueAgent':PieceValueAgent}
+    agents = {'RandomAgent': RandomAgent,'PieceValueAgent':PieceValueAgent,
+              'FixedRandomAgent':FixedRandomAgent,'Multithread':MultithreadedMinimaxAgent}
     try:
 
         return agents[agent_name]
@@ -141,6 +149,46 @@ def get_agent_from_string(agent_name):
             print(key,end=' ')
         print('Exiting...')
         sys.exit(0)
+
+class Analysis(ChessGame):
+    """Used for analysis by the author, please ignore this code."""
+    def __init__(self,**args):
+        ChessGame.__init__(self,**args)
+        self.time_per_move = []
+        self.board_states=[]
+        self.OUT_DIR = 'analysis'
+        curr_time = time.gmtime()
+        timestamp = '-'.join([str(i) for i in curr_time[1:3]])+'_'+'-'.join([str(i) for i in curr_time[3:6]])
+        if args['outfile'] is None:
+            self.outfile_name = f'{self.OUT_DIR}/{timestamp}-{args["white-agent"]}-{args["black-agent"]}.txt'
+        else:
+            self.outfile_name = f'{self.OUT_DIR}/{timestamp}-{args["outfile"]}.txt'
+        print(f'Output sent to {self.outfile_name}')
+        orig_stdout = sys.stdout
+        sys.stdout = open(self.outfile_name,'w')
+        self.agent_to_track = Color.BLACK #todo add option to specify tracking of white OR black
+    def run_game(self):
+        ChessGame.run_game(self)
+        avg = sum(self.time_per_move)/len(self.time_per_move)
+        mintime = min(self.time_per_move)
+        maxtime = max(self.time_per_move)
+        print(f'SUMMARY: {self.winner} beat {~self.winner} in {self.turn_num} moves, '+\
+                f'with an average time per move of {avg}, a min time of {mintime} and a max time of {maxtime}')
+
+    def get_next_move(self):
+        start = time.time()
+        move = ChessGame.get_next_move(self)
+        stop = time.time()
+        delta = stop-start
+        if self.player_to_move == self.agent_to_track:
+            self.time_per_move.append(delta)
+            print(f'Time to move: {delta}')
+        return move
+
+
 def run(args):
-    curr_game = ChessGame(**args)
+    if args['do-analysis']:
+        curr_game = Analysis(**args)
+    else:
+        curr_game = ChessGame(**args)
     curr_game.run_game()

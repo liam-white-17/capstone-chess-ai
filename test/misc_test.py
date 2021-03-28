@@ -1,6 +1,6 @@
-from chess.chess_utils import convert_rank_file_to_int as convert, is_check, is_checkmate
-from chess.game_board import Board
-from chess.chess_piece import *
+from chess_lib.chess_utils import convert_rank_file_to_int as convert, is_check, is_checkmate
+from chess_lib.game_board import Board
+from chess_lib.chess_piece import *
 import unittest
 class MiscTests(unittest.TestCase):
     def testConverterValues(self):

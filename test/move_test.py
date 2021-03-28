@@ -1,6 +1,6 @@
-from chess.chess_utils import convert_rank_file_to_int as convert
-from chess.game_board import Board
-from chess.chess_piece import *
+from chess_lib.chess_utils import convert_rank_file_to_int as convert
+from chess_lib.game_board import Board
+from chess_lib.chess_piece import *
 import unittest
 class MoveTest(unittest.TestCase):
     def test_move_from_str(self):
@@ -23,7 +23,6 @@ class MoveTest(unittest.TestCase):
         actual = board.get_all_moves(Color.WHITE)
         for move in actual:
             self.assertIn(move,expected)
-
 
 
 

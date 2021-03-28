@@ -1,7 +1,7 @@
 import re
 from abc import abstractmethod
-from chess.move import Move, Castle, PawnPromotion
-from chess.chess_utils import is_valid, is_capture, Color, is_check, convert_rank_file_to_int
+from chess_lib.move import Move, Castle, PawnPromotion
+from chess_lib.chess_utils import is_valid, is_capture, Color, is_check, convert_rank_file_to_int
 
 
 class Piece:
@@ -21,7 +21,7 @@ class Piece:
             self.col = col
 
     @abstractmethod
-    def get_valid_moves(self, board, grid_loc, full_recursion=True):
+    def get_valid_moves(self, board, full_recursion=True):
         """Returns valid moves (and captures) on the board for this piece at the given grid location.
         Note that this does not take into account whether the move would put the current player's king in check"""
         return []
@@ -46,13 +46,15 @@ class Piece:
         return self.white_unicode if self.color else self.black_unicode
 
     def __eq__(self, other):
-        return other.name == self.name and self.color == other.color
+        return other.name == self.name and self.color == other.color and self.row == other.row and self.col == other.col
 
     def __deepcopy__(self, memodict={}):
         piece_type = get_piece_type_from_string(self.to_char())
         piece = piece_type(is_white=self.color, loc=(self.row, self.col))
         piece.has_moved = self.has_moved
         return piece
+    def get_loc(self):
+        return (self.row,self.col)
 
     @staticmethod
     def create_piece_from_string(str, color=None):
@@ -66,10 +68,10 @@ class Pawn(Piece):
     white_unicode = '♙'
     black_unicode = '♟'
 
-    def get_valid_moves(self, board, grid_loc, full_recursion=True):
+    def get_valid_moves(self, board, full_recursion=True):
         # Pawn moves for rules are different, making it difficult to use the is_valid method from util
         moves = []
-        rank, file = grid_loc
+        rank, file = self.row, self.col
         direction = 1 if self.color else -1
         origin_row = 1 if self.color else 6
         end_of_board = 7 if self.color else 0
@@ -98,10 +100,9 @@ class Knight(Piece):
     white_unicode = '♘'
     black_unicode = '♞'
 
-    def get_valid_moves(self, board, grid_loc, full_recursion=True):
-        # TODO
+    def get_valid_moves(self, board, full_recursion=True):
         moves = []
-        rank, file = grid_loc
+        rank, file = self.row,self.col
         indices = [
             (rank + 2, file + 1),
             (rank + 2, file - 1),
@@ -123,8 +124,9 @@ class Bishop(Piece):
     white_unicode = '♗'
     black_unicode = '♝'
 
-    def get_valid_moves(self, board, grid_loc, full_recursion=True):
-        return create_diagonal_moves(board, grid_loc, self.color)
+    def get_valid_moves(self, board, full_recursion=True):
+
+        return create_diagonal_moves(board, (self.row,self.col), self.color)
 
 
 class Rook(Piece):
@@ -132,8 +134,8 @@ class Rook(Piece):
     white_unicode = '♖'
     black_unicode = '♜'
 
-    def get_valid_moves(self, board, grid_loc, full_recursion=True):
-        return create_orthogonal_moves(board, grid_loc, self.color)
+    def get_valid_moves(self, board, full_recursion=True):
+        return create_orthogonal_moves(board, (self.row,self.col), self.color)
 
 
 class Queen(Piece):
@@ -141,8 +143,9 @@ class Queen(Piece):
     white_unicode = '♕'
     black_unicode = '♛'
 
-    def get_valid_moves(self, board, grid_loc, full_recursion=True):
-        return create_diagonal_moves(board, grid_loc, self.color) + create_orthogonal_moves(board, grid_loc, self.color)
+    def get_valid_moves(self, board, full_recursion=True):
+        return create_diagonal_moves(board, (self.row,self.col), self.color) +\
+               create_orthogonal_moves(board, (self.row,self.col), self.color)
 
 
 class King(Piece):
@@ -150,10 +153,10 @@ class King(Piece):
     white_unicode = '♔'
     black_unicode = '♚'
 
-    def get_valid_moves(self, board, grid_loc, full_recursion=True):
+    def get_valid_moves(self, board, full_recursion=True):
         moves = []
         king_loc = (0,4) if self.color else (7,4)
-        rank, file = grid_loc
+        rank, file = self.row,self.col
         indices = [
             (rank + 1, file + 1),
             (rank + 1, file),
@@ -167,7 +170,7 @@ class King(Piece):
         for r, f in indices:
             if is_valid(r, f, board, self.color):
                 moves.append(Move(board=board, src=(rank, file), dest=(r, f), color=self.color))
-        if not self.has_moved and full_recursion and grid_loc == king_loc and not is_check(board, self.color):
+        if not self.has_moved and full_recursion and (rank,file) == king_loc and not is_check(board, self.color):
             queenside_rook_loc = (0, 0) if self.color else (7, 0)
             kingside_rook_loc = (0, 7) if self.color else (7, 7)
             queenside_rook = board.piece_at(*queenside_rook_loc)
@@ -260,11 +263,12 @@ def get_piece_type_from_string(char):
     return mydict[char.lower()]
 
 def create_move_from_str(board, str:str,player_to_move):
-    """Creates a move from a string that's (loosely) based on standard algebraic notation for chess moves"""
+    """Creates a move from a string that's (loosely) based on standard algebraic notation for chess_lib moves.
+    This method has to be in this file to avoid a circular import"""
     if str in ['0-0','0-0-0']:
-        loc = board.king_locations[player_to_move]
+        loc = board.get_king_location(player_to_move)
         king = board.piece_at(*loc)
-        moves = king.get_valid_moves(board,loc)
+        moves = king.get_valid_moves(board)
         queenside = str == '0-0-0'
         can_castle = False
         for move in moves:
@@ -276,7 +280,7 @@ def create_move_from_str(board, str:str,player_to_move):
 
     regex = re.compile('[phbrqkPHBRQK][abcdefgh][1-8]x?[abcdefgh][1-8](=[hbrqHBRQ])?')
     if regex.fullmatch(str) is None:
-        raise ValueError(f'{str} does not match accepted chess notation')
+        raise ValueError(f'{str} does not match accepted chess_lib notation')
 
     str.replace('x','')
     #expected_piece_type = get_piece_type_from_string(str[0])

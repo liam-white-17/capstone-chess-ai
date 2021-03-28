@@ -1,6 +1,6 @@
-from chess.chess_piece import *
-from chess.game_board import Board
-from chess.move import Move
+from chess_lib.chess_piece import *
+from chess_lib.game_board import Board
+from chess_lib.move import Move
 
 def test_pawn_moves():
     board = Board()

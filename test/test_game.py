@@ -1,8 +1,8 @@
 import unittest
 from unittest.mock import patch
 from game.game import ChessGame
-from chess.chess_utils import Color
-from chess.chess_piece import *
+from chess_lib.chess_utils import Color
+from chess_lib.chess_piece import *
 class BoardTest(unittest.TestCase):
     @patch('builtins.input',side_effect=['kd3d4','kd3e3'])
     def test_cant_move_to_check(self,mock_input):

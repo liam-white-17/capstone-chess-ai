@@ -1,1 +1,0 @@
-"""This package contains all methods, data structures and classes related to the rules of chess."""
