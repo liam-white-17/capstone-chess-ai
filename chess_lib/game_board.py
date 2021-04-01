@@ -8,10 +8,12 @@ class Board:
         """Constructor"""
         self.grid = list()
         self.dim = dim
+        # self.grid = ([[GridSpace((r,c)) for r in range(0,8)] for c in range(0,8)])
         for r in range(0, dim):
             self.grid.append(list())
             for c in range(0, dim):
                 self.grid[r].append(GridSpace((r, c)))
+        # print(self.grid)
         self.white_pieces = []
         self.black_pieces = []
         # self.white_king = None
@@ -67,13 +69,6 @@ class Board:
                     self.black_pieces.append(piece)
     def get_pieces(self,color):
         return self.white_pieces if color else self.black_pieces
-        # pieces = []
-        # for rank in range(0, 8):
-        #     for file in range(0, 8):
-        #         piece = self.grid[rank][file].get_piece()
-        #         if piece is not None and piece.get_color() == color:
-        #             pieces.append(piece)
-        # return pieces
 
 
     def create_successor_board(self, move):
@@ -152,11 +147,12 @@ class Board:
     def square_at(self, row, col):
         """A method for returning a GridSpace based on numeric indexing"""
         return self.grid[row][col]
-    def get_all_moves(self,color,no_moves_to_check=True):
+    def get_all_moves(self,color,no_moves_to_check=True,full_recursion=True):
+        #full recursion is set to false when evaluating a castling move to avoid an infinite loop
         all_moves = []
         pieces = self.get_pieces(color)
         for piece in pieces:
-            curr_moves = piece.get_valid_moves(self, (piece.row,piece.col))
+            curr_moves = piece.get_valid_moves(self,full_recursion=full_recursion)
             for move in curr_moves:
                 successor = self.create_successor_board(move)
                 if not no_moves_to_check or not is_check(successor, color):
@@ -211,7 +207,7 @@ class Board:
         if len(char_rows) != 8:
             raise Exception("Bad input for loading board from text; input recieved:\n" + char_grid)
         for rank in range(0, 8):
-            curr_row = char_rows[rank].split(' ')
+            curr_row = char_rows[rank].replace('  ',' ').split(' ')
             for file in range(0, 8):
                 chr = curr_row[file]
                 piece_type = get_piece_type_from_string(chr)

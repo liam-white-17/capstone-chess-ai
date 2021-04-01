@@ -13,7 +13,6 @@ from os import getcwd
 class ChessGame:
 
     def __init__(self, **args):
-
         self.board = Board().new_game() if 'load_file' not in args or args['load_file'] is None \
             else Board.load_from_file(args['load_file'])
         # setting AI as None indicates that the color white/black is human controlled
@@ -22,25 +21,25 @@ class ChessGame:
         self.black_AI = None
         self.winner = None
         if args['white-agent'] is not None:
-            self.white_AI = get_agent_from_string(args['white-agent'])(color=Color.WHITE)
+            self.white_AI = get_agent_from_string(args['white-agent'])(color=Color.WHITE,**args)
         if args['black-agent'] is not None:
-            self.black_AI = get_agent_from_string(args['black-agent'])(color=Color.BLACK)
+            self.black_AI = get_agent_from_string(args['black-agent'])(color=Color.BLACK,**args)
 
         self.player_to_move = Color.WHITE
 
         self.no_graphics = True  # TODO add command-line options to enable UI (once UI is completed)
 
         self.turn_num = 1
-        self.move_history = Stack()
-
-
+        self.recent_board_states = []
+        self.max_states_kept = 12
+        self.fifty_move_rule_counter = 0 #under FIDE rules, a game is a draw when no player has moved a pawn or captured a piece
+        # in the past 50 turns
 
     def run_game(self):
-        game_over = False
         # TODO separate into UI vs command-line run-game types
-        print('Launching new game of chess_lib...')
+        print('Launching new game of chess...')
 
-        while not game_over:
+        while 1:
             print(f'Beginning turn {self.turn_num} for {self.get_player_to_move(as_string=True)}')
             # if self.turn_num % 10 == 0:
             #     time.sleep(1.0)
@@ -49,12 +48,16 @@ class ChessGame:
             if is_checkmate(self.board,self.player_to_move):
                 print(f'{self.player_to_move} is in checkmate. {~self.player_to_move} wins!')
                 self.winner = ~self.player_to_move
-                game_over = True
                 break
-            elif no_valid_moves(self.board,self.player_to_move) and not is_check(self.board,self.player_to_move):
+            elif is_stalemate(self.board,self.player_to_move):
                 print(f'{self.player_to_move} is either in stalemate or it is no longer possible for either player to win.'+\
                       ' Match is a draw!')
-                game_over=True
+                break
+            elif self.is_threefold_repetition():
+                print('Match is a draw due to "threefold repetition", where the same board is repeated three times.')
+                break
+            elif self.fifty_move_rule_counter >= 50:
+                print('Match is a draw due to fifty moves without any capturing or pawn movement by either side')
                 break
             elif is_check(self.board,self.player_to_move):
                 print(f'{self.player_to_move} is in check!')
@@ -65,8 +68,10 @@ class ChessGame:
 
     def get_next_move(self):
         if self.player_to_move == Color.WHITE and self.white_AI is not None:
+            print('Calculating, this may take a while...')
             return self.white_AI.get_next_move(self.board)
         if self.player_to_move == Color.BLACK and self.black_AI is not None:
+            print('Calculating, this may take a while...')
             return self.black_AI.get_next_move(self.board)
 
 
@@ -125,10 +130,24 @@ class ChessGame:
             print(f'Invalid input recieved: pawn in illegal location after move processed.')
             print('If this move puts a pawn at the end of the board, make sure you specify the promotion type')
             return
+        if len(self.recent_board_states) > self.max_states_kept:
+            self.recent_board_states.pop(0)
+        self.recent_board_states.append(self.board.__deepcopy__())
         self.board = successor
         self.player_to_move = ~self.player_to_move
         if self.player_to_move:
             self.turn_num += 1
+        if isinstance(piece_to_move, Pawn) or move.piece_captured is not None:
+            self.fifty_move_rule_counter = 0
+        else:
+            self.fifty_move_rule_counter += 1
+    def is_threefold_repetition(self):
+        if len(self.recent_board_states) <= self.max_states_kept:
+            return False
+        for state in self.recent_board_states:
+            if self.recent_board_states.count(state) >= 3:
+                return True
+        return False
 
 
     def get_player_to_move(self, as_string=False):
@@ -139,7 +158,7 @@ class ChessGame:
 
 def get_agent_from_string(agent_name):
     agents = {'RandomAgent': RandomAgent,'PieceValueAgent':PieceValueAgent,
-              'FixedRandomAgent':FixedRandomAgent,'Multithread':MultithreadedMinimaxAgent}
+              'FixedRandomAgent':FixedRandomAgent,'WP':WorsePieceValueAgent,'LocationAgent':PieceLocationAgent}
     try:
 
         return agents[agent_name]
@@ -153,26 +172,35 @@ def get_agent_from_string(agent_name):
 class Analysis(ChessGame):
     """Used for analysis by the author, please ignore this code."""
     def __init__(self,**args):
-        ChessGame.__init__(self,**args)
+
         self.time_per_move = []
         self.board_states=[]
         self.OUT_DIR = 'analysis'
         curr_time = time.gmtime()
         timestamp = '-'.join([str(i) for i in curr_time[1:3]])+'_'+'-'.join([str(i) for i in curr_time[3:6]])
         if args['outfile'] is None:
-            self.outfile_name = f'{self.OUT_DIR}/{timestamp}-{args["white-agent"]}-{args["black-agent"]}.txt'
+            self.basefile_name = f'{self.OUT_DIR}/{timestamp}-{args["white-agent"]}-{args["black-agent"]}'
         else:
-            self.outfile_name = f'{self.OUT_DIR}/{timestamp}-{args["outfile"]}.txt'
+            self.basefile_name = f'{timestamp}-{args["outfile"]}'
+        self.outfile_name = self.OUT_DIR+'/'+self.basefile_name+'.txt'
         print(f'Output sent to {self.outfile_name}')
+
+        self.agent_to_track = Color.WHITE if args['track_white'] else Color.BLACK #todo add option to specify tracking of white OR black
+        args['logfile'] = self.OUT_DIR+'/'+self.basefile_name+'_LOG.txt'
+        print(f'Logs found at {args["logfile"]}')
         orig_stdout = sys.stdout
-        sys.stdout = open(self.outfile_name,'w')
-        self.agent_to_track = Color.BLACK #todo add option to specify tracking of white OR black
+        sys.stdout = open(self.outfile_name, 'a')
+        ChessGame.__init__(self, **args)
     def run_game(self):
         ChessGame.run_game(self)
         avg = sum(self.time_per_move)/len(self.time_per_move)
         mintime = min(self.time_per_move)
         maxtime = max(self.time_per_move)
-        print(f'SUMMARY: {self.winner} beat {~self.winner} in {self.turn_num} moves, '+\
+        if self.winner is None:
+            print(f'SUMMARY: stalemate reached in {self.turn_num} moves,'+\
+                  f'with an average time per move of {avg}, a min time of {mintime} and max time of {maxtime}')
+        else:
+            print(f'SUMMARY: {self.winner} beat {~self.winner} in {self.turn_num} moves, '+\
                 f'with an average time per move of {avg}, a min time of {mintime} and a max time of {maxtime}')
 
     def get_next_move(self):

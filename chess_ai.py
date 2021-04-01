@@ -26,6 +26,8 @@ parser.add_argument("-b", "--black-agent", help='AI agent used to represent blac
                     dest='black-agent')
 parser.add_argument('-a','--analysis',help='Used by the author for analysis, you can ignore this option',action='store_true',
                     dest='do-analysis')
+parser.add_argument('-T','--track-white',help='Used by author for analysis, you can ignore this option',action='store_true',
+                    dest='track_white')
 parser.add_argument('-o','--outfile',help='Storing of analysis files, you can ignore this option',default=None,dest='outfile')
 
 args = parser.parse_args(sys.argv[1:])
