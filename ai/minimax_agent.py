@@ -7,12 +7,12 @@ from chess_lib.chess_piece import *
 from ai.agent import Agent
 import math
 
-#logging.basicConfig(level=logging.DEBUG)
+
 
 
 class AbstractMinimaxAgent(Agent):
     """Abstract minimax agent that all minimax agents use as a superclass"""
-    DEFAULT_MAX_DEPTH = 3  # depth increases each time min value is called from within max value or vice versa
+    DEFAULT_MAX_DEPTH = 4  # depth increases each time min value is called from within max value or vice versa
 
     STALEMATE_VAL = -1 # could be set to zero but we want to avoid stalemates when all moves are equal
     WIN_VAL = math.inf
@@ -24,8 +24,8 @@ class AbstractMinimaxAgent(Agent):
         self.evaluation_function = None
         if 'logfile' in args:
             logging.basicConfig(filename=args['logfile'],level=logging.DEBUG,filemode='a')
-        else:
-            logging.basicConfig(level=logging.DEBUG,filemode='a')
+        # else:
+        #     logging.basicConfig(level=logging.DEBUG,filemode='a')
 
 
 
@@ -41,7 +41,7 @@ class AbstractMinimaxAgent(Agent):
         moves = []
         for piece in board.get_pieces(self.color):
             moves.extend([move for move in piece.get_valid_moves(board)])
-
+        i=1
         # moves = []
         # for piece in board.get_pieces(self.color):
         #     piece_moves = piece.get_valid_moves(board)
@@ -63,10 +63,11 @@ class AbstractMinimaxAgent(Agent):
             alpha = max(alpha, value)
         stop = time.time()
         delta = stop - start
-        logging.debug(f'Score: {value} Time to find move: {delta} move: {best_move} Color: {self.color} Nodes searched: {self.node_count}')
-        if best_move is None:
-            moves = [move for move in moves if not is_check(board.create_successor_board(move),self.color)]
-            return random.choice(moves)
+        logging.debug(f'Score: {value:4f} Time to find move: {delta:2f} move: {best_move} Color: {self.color} Nodes searched: {self.node_count}')
+        if best_move is None: #if we're not in stalemate (which is evaluated before calling the agent) and no move is 'good'
+            # then the enemy is guaranteed a checkmate no matter what, so just pick a random legal move
+            legal_moves = [move for move in moves if not is_check(board.create_successor_board(move),self.color)]
+            return random.choice(legal_moves)
         return best_move
 
     def min_value(self, state, curr_depth, alpha, beta):

@@ -282,7 +282,7 @@ def create_move_from_str(board, str:str,player_to_move):
     if regex.fullmatch(str) is None:
         raise ValueError(f'{str} does not match accepted chess_lib notation')
 
-    str.replace('x','')
+    str = str.replace('x','')
     #expected_piece_type = get_piece_type_from_string(str[0])
 
     src = convert_rank_file_to_int(str[1:3])
