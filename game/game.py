@@ -158,7 +158,7 @@ class ChessGame:
 
 def get_agent_from_string(agent_name):
     agents = {'RandomAgent': RandomAgent,'PieceValueAgent':PieceValueAgent,
-              'FixedRandomAgent':FixedRandomAgent,'WP':WorsePieceValueAgent,'LocationAgent':PieceLocationAgent}
+              'FixedRandomAgent':FixedRandomAgent,'LocationAgent':PieceLocationAgent}
     try:
 
         return agents[agent_name]

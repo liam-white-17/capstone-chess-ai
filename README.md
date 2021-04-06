@@ -4,16 +4,15 @@ This is a chess game with functionality for playing with any combination of huma
 
 All components were built using python3. Apart from those built in to python, no external libraries were used as of 3/14/21.
 
-At this time, the only available AI agent is the 'RandomAgent'. As its name implies, the RandomAgent does not behave intelligently and randomly selects a legal move for its color. While the RandomAgent moves out of check, it does not assign any special weight to moves that capture pieces or win the game, making it quite easy for even an unskilled player to beat.
-
-Upon completion, the AI should make use of the minimax algorithm to make intelligent moves in an effort to win games.
-
 ## Usage
 Launching a game is straightforward. For a two person human game, simply run as follows:
 ```
-python chess.py
+pypy3 chess_ai.py
 ```
-The command line will then display a board like the following:
+**It is _strongly_ recommended that you use [pypy](https://www.pypy.org/) to run the AI as using the default python interpreter will result in significantly longer waits for the AI to make a move.**
+
+
+When first booting up the game, the command line will display a board like the following:
 ```
 
          a b c d e f g h
@@ -55,6 +54,13 @@ To run the game with two random AIs, run with the following commands:
 python chess.py --white-agent RandomAgent --black-agent RandomAgent
 ```
 To run with only one AI, omit the 'agent' command of your choosing.
+
+Currently, the list of AI agents to chose from includes:
+*RandomAgent: picks a random legal move. Intended as a baseline, obviously pretty easy to beat.
+*FixedRandomAgent: same as RandomAgent except the seed for random.choice() is fixed constant, so FixedRandomAgent will always make the same move in a given board state. Used to compare the decision making of different AIs in a controlled environment.
+*PieceValueAgent: chooses the move that will result in the maximum utility based on the value of each piece on the board. This agent picks the move that will maximize its own piece values while minimizing that of the opponent (though if it has the opportunity to checkmate, it'll just do that instead). 
+*LocationAgent: A WIP agent that maximizes its own piece value as in PieceValueAgent but also chooses moves that put its own pieces in the best possible position on hte board while denying its opponent the chance to do likewise. This agent is NOT finished yet and shouldn't be expected to play optimally.
+
 
 ## Project structure:
 ###Packages:

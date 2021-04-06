@@ -22,8 +22,8 @@ class AbstractMinimaxAgent(Agent):
         Agent.__init__(self, **args)
         self.max_depth = args['depth'] if 'depth' in args else self.DEFAULT_MAX_DEPTH
         self.evaluation_function = None
-        if 'logfile' in args:
-            logging.basicConfig(filename=args['logfile'],level=logging.DEBUG,filemode='a')
+        # if 'logfile' in args:
+        #     logging.basicConfig(filename=args['logfile'],level=logging.DEBUG,filemode='a')
         # else:
         #     logging.basicConfig(level=logging.DEBUG,filemode='a')
 
