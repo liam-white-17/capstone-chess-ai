@@ -20,6 +20,7 @@ class ChessGame:
         self.white_AI = None
         self.black_AI = None
         self.winner = None
+        self.UNDO_VALUE = 'undo'
         if args['white-agent'] is not None:
             self.white_AI = get_agent_from_string(args['white-agent'])(color=Color.WHITE,**args)
         if args['black-agent'] is not None:
@@ -63,7 +64,10 @@ class ChessGame:
                 print(f'{self.player_to_move} is in check!')
             print(f'It is {self.player_to_move} to move.')
             move = self.get_next_move()
-            self.process_move(move)
+            if move is None:
+                continue
+            else:
+                self.process_move(move)
 
 
     def get_next_move(self):
@@ -95,6 +99,22 @@ class ChessGame:
                     print(valid_move,end=', ')
             elif cli_input in ['-e','exit','--exit']:
                 sys.exit(0)
+            elif cli_input in ['-u','--undo','undo']:
+                length = len(self.recent_board_states)
+                if length == 0:
+                    print('Maximum number of undos reached.')
+                else:
+                    if length == 1:
+                        self.player_to_move = ~self.player_to_move
+                        self.board = self.recent_board_states[-1]
+                        self.recent_board_states.pop()
+                    else:
+                        self.turn_num -= 1
+                        self.fifty_move_rule_counter -= 2
+                        self.recent_board_states.pop()
+                        self.board = self.recent_board_states[-1]
+                        self.recent_board_states.pop()
+                    return None
             else:
                 try:
                     move = chess_piece.create_move_from_str(self.board, cli_input, self.player_to_move)
@@ -158,7 +178,7 @@ class ChessGame:
 
 def get_agent_from_string(agent_name):
     agents = {'RandomAgent': RandomAgent,'PieceValueAgent':PieceValueAgent,
-              'FixedRandomAgent':FixedRandomAgent,'LocationAgent':PieceLocationAgent}
+              'FixedRandomAgent':FixedRandomAgent,'LocationAgent':PieceLocationAgent,'MichniewskiAgent':MichniewskiAgent}
     try:
 
         return agents[agent_name]

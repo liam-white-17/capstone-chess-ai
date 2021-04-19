@@ -3,7 +3,6 @@ import io,copy
 
 
 class Board:
-
     def __init__(self,dim=8):
         """Constructor"""
         self.grid = list()
@@ -188,7 +187,7 @@ class Board:
             output_row = str(row+1)+'\t'
             for col in range(0, 8):
                 piece = self.grid[row][col].get_piece()
-                output_row += '  ' + ('*' if piece is None else (piece.to_char() if chars_only else piece.to_unicode()))
+                output_row += '  '  + ('*' if piece is None else (piece.to_char() if chars_only else piece.to_color_char()))
             output += '\n' + output_row.lstrip(' ')
         return output.lstrip('\n')
     @staticmethod

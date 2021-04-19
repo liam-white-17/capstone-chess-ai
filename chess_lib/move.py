@@ -48,7 +48,7 @@ class Castle(Move):
         Move.__init__(self,board,src=king_loc,dest=new_king_loc,color=color)
         self.is_queenside = is_queenside
         self.rook_src = queenside_rook_loc if is_queenside else kingside_rook_loc
-        self.rook_dest = (self.rook_src[0],self.rook_src[1]+(3 if is_queenside else -3))
+        self.rook_dest = (self.rook_src[0],self.rook_src[1]+(3 if is_queenside else -2))
 
     def __repr__(self):
         return '0-0-0' if self.is_queenside else '0-0'

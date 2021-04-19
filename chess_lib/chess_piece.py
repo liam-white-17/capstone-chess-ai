@@ -42,6 +42,9 @@ class Piece:
     def to_char(self):
         return self.name.upper() if self.color == Color.WHITE else self.name.lower()
 
+    def to_color_char(self):
+        pass
+
     def to_unicode(self):
         return self.white_unicode if self.color else self.black_unicode
 
