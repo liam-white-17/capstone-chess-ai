@@ -167,15 +167,16 @@ class PieceLocationAgent(AbstractMinimaxAgent):
     def __init__(self, **args):
         AbstractMinimaxAgent.__init__(self, **args)
         self.evaluation_function = lambda _state, _color: piece_location_evaluation(_state, _color,
-                                                                                    DUMMY_LOCATION_VALUES)
+                                                                                    DUMMY_LOCATION_VALUES) + piece_value_evaluation(
+            _state, _color, piece_values=DEFAULT_PIECE_VALUE_MAPPING)
 
 
 class MichniewskiAgent(AbstractMinimaxAgent):
     def __init__(self, **args):
         AbstractMinimaxAgent.__init__(self, **args)
         self.evaluation_function = lambda _state, _color: piece_location_evaluation(_state, _color,
-                                                                                    piece_values=MICHNIEWSKI_PIECE_VALUES,
-                                                                                    location_values=MICHNIEWSKI_LOCATION_VALUES)
+                                                                                    location_values=MICHNIEWSKI_LOCATION_VALUES) + piece_value_evaluation(
+            _state, _color, piece_values=MICHNIEWSKI_PIECE_VALUES)
 
 
 def simple_heuristic(move):

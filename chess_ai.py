@@ -24,11 +24,17 @@ parser.add_argument("-w", "--white-agent", help='AI agent used to represent whit
                     dest='white-agent')
 parser.add_argument("-b", "--black-agent", help='AI agent used to represent black player', default=None,
                     dest='black-agent')
-parser.add_argument('-a','--analysis',help='Used by the author for analysis, you can ignore this option',action='store_true',
+parser.add_argument('--no-unicode',
+                    help='Specifying this option will replace unicode chess characters (the default) with letters representing each piece.',
+                    action='store_true', dest='no-unicode')
+parser.add_argument('-a', '--analysis', help='Used by the author for analysis, you can ignore this option',
+                    action='store_true',
                     dest='do-analysis')
-parser.add_argument('-T','--track-white',help='Used by author for analysis, you can ignore this option',action='store_true',
+parser.add_argument('-T', '--track-white', help='Used by author for analysis, you can ignore this option',
+                    action='store_true',
                     dest='track_white')
-parser.add_argument('-o','--outfile',help='Storing of analysis files, you can ignore this option',default=None,dest='outfile')
+parser.add_argument('-o', '--outfile', help='Storing of analysis files, you can ignore this option', default=None,
+                    dest='outfile')
 
 args = parser.parse_args(sys.argv[1:])
 if args.load_file:

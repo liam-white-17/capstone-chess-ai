@@ -40,13 +40,12 @@ class Piece:
         return self.to_char()
 
     def to_char(self):
-        return self.name.upper() if self.color == Color.WHITE else self.name.lower()
+        # return self.name.upper() if self.color == Color.WHITE else self.name.lower()
+        return self.name
 
-    def to_color_char(self):
-        pass
 
     def to_unicode(self):
-        return self.white_unicode if self.color else self.black_unicode
+        return self.black_unicode #if self.color else self.black_unicode
 
     def __eq__(self, other):
         return other.name == self.name and self.color == other.color and self.row == other.row and self.col == other.col
@@ -99,7 +98,7 @@ class Pawn(Piece):
 
 
 class Knight(Piece):
-    name = 'H'
+    name = 'N'
     white_unicode = '♘'
     black_unicode = '♞'
 
@@ -262,7 +261,7 @@ def create_orthogonal_moves(board, grid_loc, color):
 
 
 def get_piece_type_from_string(char):
-    mydict = {'p': Pawn, 'h': Knight, 'b': Bishop, 'r': Rook, 'q': Queen, 'k': King, '*': None}
+    mydict = {'p': Pawn, 'n': Knight, 'b': Bishop, 'r': Rook, 'q': Queen, 'k': King, '*': None}
     return mydict[char.lower()]
 
 def create_move_from_str(board, str:str,player_to_move):

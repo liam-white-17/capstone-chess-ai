@@ -1,7 +1,10 @@
 from chess_lib.chess_piece import *
-import io,copy
+from colorama import init as colorama_init,Fore,Back,Style
 
-
+EMPTY_SQUARE_NO_UNICODE = '   '
+EMPTY_SQUARE_UNICODE = '   \u205f'
+WHITE_PIECE_ANSI = Fore.WHITE + Style.BRIGHT
+BLACK_PIECE_ANSI = Fore.BLACK + Style.BRIGHT
 class Board:
     def __init__(self,dim=8):
         """Constructor"""
@@ -15,8 +18,7 @@ class Board:
         # print(self.grid)
         self.white_pieces = []
         self.black_pieces = []
-        # self.white_king = None
-        # self.black_king = None
+        colorama_init(autoreset=True)
     def new_game(self):
         """Fills in pieces matching their position in a new game of chess_lib"""
         for c in range(0, 8):
@@ -39,22 +41,10 @@ class Board:
         self.grid[0][4].add_piece(King(is_white=True))
         self.grid[7][3].add_piece(Queen(is_white=False))
         self.grid[7][4].add_piece(King(is_white=False))
-        # self.white_king = self.piece_at(0,4)
-        # self.black_king = self.piece_at(7,4)
+
         self.set_piece_locations()
         return self
 
-    # def get_pieces(self, color):
-    #     """Returns all the pieces of a given color.
-    #     Pieces are stored in tuples containing the piece and their coordinates.
-    #     The color parameter is a boolean variable--true for white, false for black"""
-    #     pieces = []
-    #     for rank in range(0, 8):
-    #         for file in range(0, 8):
-    #             piece = self.grid[rank][file].get_piece()
-    #             if piece is not None and piece.get_color() == color:
-    #                 pieces.append((piece, (rank, file)))
-    #     return pieces
     def set_piece_locations(self):
         """Helper function"""
         for rank in range(0,8):
@@ -92,11 +82,6 @@ class Board:
 
         piece_to_move.has_moved = True
         temp.square_at(*dest).add_piece(piece_to_move)
-        # if isinstance(piece_to_move,King):
-        #     if new_piece == Color.WHITE:
-        #         temp.white_king = new_piece
-        #     else:
-        #         temp.black_king = new_piece
 
         if isinstance(move,Castle):
             rook_src, rook_dest = move.rook_src,move.rook_dest
@@ -178,17 +163,19 @@ class Board:
                 board_row += ' ' + ('*' if piece is None else piece.to_char())
             output += '\n' + board_row.lstrip(' ')
         return output.lstrip('\n')
-    def display_board(self,chars_only=True):
+    def display_board(self,unicode=False):
         """Displays board in standard chess_lib format (i.e. with ranks and files) as opposed to the (x,y) coordinate system
         used in implementation. This is used in the CLI output format of the game"""
-        output = "\t  a  b  c  d  e  f  g  h\n"
-
+        separator = '  \u2005' if unicode else '  '
+        header = separator.join(['a','b','c','d','e','f','g','h'])
+        output = '   '+header
         for row in range(7, -1, -1):
-            output_row = str(row+1)+'\t'
+            output_row = str(row+1)+' '
             for col in range(0, 8):
-                piece = self.grid[row][col].get_piece()
-                output_row += '  '  + ('*' if piece is None else (piece.to_char() if chars_only else piece.to_color_char()))
-            output += '\n' + output_row.lstrip(' ')
+                # piece = self.grid[row][col].get_piece()
+                # output_row += '  '  + ('*' if piece is None else (piece.to_char() if chars_only else piece.to_color_char()))
+                output_row += self.grid[row][col].get_ui_output(unicode=unicode)
+            output += Style.RESET_ALL+'\n' + output_row.lstrip(' ')
         return output.lstrip('\n')
     @staticmethod
     def load_from_file(fpath):
@@ -238,7 +225,7 @@ class GridSpace:
     def __init__(self, loc):
         r, c = loc
         self.loc = loc
-        self.color = (r + c % 2 == 0)  # color of space on board determined as such
+        self.color = ((r + c) % 2 == 0)  # color of space on board determined as such
         # note that for GridSpace, self.color represents the color of the SQUARE, which is purely for UI considerations.
         # it has no bearing on player/piece colors
         self.piece = None
@@ -248,7 +235,20 @@ class GridSpace:
     def is_empty(self):
         """Returns true if no piece is within this grid space, false otherwise"""
         return self.piece is None
+    def get_ui_output(self,unicode=False):
+        background_color = (Back.YELLOW if self.color else Back.RED)  # yellow is used for white/beige squares, red for black/maroon squares
 
+        if self.piece is None:
+            return background_color + (EMPTY_SQUARE_UNICODE if unicode else EMPTY_SQUARE_NO_UNICODE)
+        else:
+            # if unicode:
+            #     return background_color + self.piece.to_unicode()
+            # else:
+            foreground_color = WHITE_PIECE_ANSI if self.piece.color else BLACK_PIECE_ANSI
+            piece_char = ('\u2005\u200A'+self.piece.to_unicode() + '\u2004\u200A') if unicode else f' {self.piece.to_char()} '
+            return background_color + foreground_color + piece_char
+            # piece_char = self.piece.to_unicode() if unicode else f' {self.piece.to_char()} '
+            # return background_color + foreground_color + piece_char
     def add_piece(self, piece):
         """Adds a piece to this position. Throws an exception if a piece is already present."""
         if self.piece is not None:

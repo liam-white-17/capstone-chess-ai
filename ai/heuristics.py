@@ -18,7 +18,23 @@ def piece_value_evaluation(state, color, piece_values=DEFAULT_PIECE_VALUE_MAPPIN
     return get_all_piece_values(friendly_pieces, piece_values) - get_all_piece_values(enemy_pieces, piece_values)
 
 
-def piece_location_evaluation(state, color, location_values, piece_values=DEFAULT_PIECE_VALUE_MAPPING):
+# def piece_location_evaluation(state, color, location_values, piece_values=DEFAULT_PIECE_VALUE_MAPPING):
+#     def get_piece_location_values(pieces, location_values):
+#         score = 0
+#         for piece in pieces:
+#             row, col = piece.get_loc()
+#             if piece.color != Color.WHITE:
+#                 row = 7 - row
+#             piece_class = piece.__class__
+#             score += piece_values[piece_class]
+#             if piece_class in location_values.keys():
+#                 score += location_values[piece_class][row][col]
+#         return score
+#
+#     return get_piece_location_values(state.get_pieces(color), location_values) - get_piece_location_values(
+#         state.get_pieces(~color), location_values)
+
+def piece_location_evaluation(state, color, location_values):
     def get_piece_location_values(pieces, location_values):
         score = 0
         for piece in pieces:
@@ -26,7 +42,6 @@ def piece_location_evaluation(state, color, location_values, piece_values=DEFAUL
             if piece.color != Color.WHITE:
                 row = 7 - row
             piece_class = piece.__class__
-            score += piece_values[piece_class]
             if piece_class in location_values.keys():
                 score += location_values[piece_class][row][col]
         return score
@@ -34,6 +49,8 @@ def piece_location_evaluation(state, color, location_values, piece_values=DEFAUL
     return get_piece_location_values(state.get_pieces(color), location_values) - get_piece_location_values(
         state.get_pieces(~color), location_values)
 
+def best_heuristic(state,color):
+    pass
 
 DUMMY_LOCATION_VALUES = {  # these values used as 'default'
     Pawn: [

@@ -22,9 +22,9 @@ class ChessGame:
         self.winner = None
         self.UNDO_VALUE = 'undo'
         if args['white-agent'] is not None:
-            self.white_AI = get_agent_from_string(args['white-agent'])(color=Color.WHITE,**args)
+            self.white_AI = get_agent_from_string(args['white-agent'])(color=Color.WHITE, **args)
         if args['black-agent'] is not None:
-            self.black_AI = get_agent_from_string(args['black-agent'])(color=Color.BLACK,**args)
+            self.black_AI = get_agent_from_string(args['black-agent'])(color=Color.BLACK, **args)
 
         self.player_to_move = Color.WHITE
 
@@ -32,9 +32,11 @@ class ChessGame:
 
         self.turn_num = 1
         self.recent_board_states = []
-        self.max_states_kept = 12
-        self.fifty_move_rule_counter = 0 #under FIDE rules, a game is a draw when no player has moved a pawn or captured a piece
+        self.max_states_kept = 20
+        self.max_repetition = 5
+        self.fifty_move_rule_counter = 0  # under FIDE rules, a game is a draw when no player has moved a pawn or captured a piece
         # in the past 50 turns
+        self.use_unicode = not (args['no-unicode'])
 
     def run_game(self):
         # TODO separate into UI vs command-line run-game types
@@ -45,14 +47,19 @@ class ChessGame:
             # if self.turn_num % 10 == 0:
             #     time.sleep(1.0)
             print('Current Board state:\n')
-            print(self.board.display_board())
-            if is_checkmate(self.board,self.player_to_move):
+            try:
+                print(self.board.display_board(unicode=self.use_unicode))
+            except UnicodeError:
+                self.use_unicode = False
+                print(self.board.display_board(unicode=self.use_unicode))
+            if is_checkmate(self.board, self.player_to_move):
                 print(f'{self.player_to_move} is in checkmate. {~self.player_to_move} wins!')
                 self.winner = ~self.player_to_move
                 break
-            elif is_stalemate(self.board,self.player_to_move):
-                print(f'{self.player_to_move} is either in stalemate or it is no longer possible for either player to win.'+\
-                      ' Match is a draw!')
+            elif is_stalemate(self.board, self.player_to_move):
+                print(
+                    f'{self.player_to_move} is either in stalemate or it is no longer possible for either player to win.' + \
+                    ' Match is a draw!')
                 break
             elif self.is_threefold_repetition():
                 print('Match is a draw due to "threefold repetition", where the same board is repeated three times.')
@@ -60,7 +67,7 @@ class ChessGame:
             elif self.fifty_move_rule_counter >= 50:
                 print('Match is a draw due to fifty moves without any capturing or pawn movement by either side')
                 break
-            elif is_check(self.board,self.player_to_move):
+            elif is_check(self.board, self.player_to_move):
                 print(f'{self.player_to_move} is in check!')
             print(f'It is {self.player_to_move} to move.')
             move = self.get_next_move()
@@ -68,7 +75,6 @@ class ChessGame:
                 continue
             else:
                 self.process_move(move)
-
 
     def get_next_move(self):
         if self.player_to_move == Color.WHITE and self.white_AI is not None:
@@ -78,28 +84,36 @@ class ChessGame:
             print('Calculating, this may take a while...')
             return self.black_AI.get_next_move(self.board)
 
-
         valid_move_recieved = False
         while not valid_move_recieved:
             print()
 
-            cli_input = input("Please enter the move you would like to make.\nFor formatting options, type -h"+
-            "\nTo see a list of all valid moves, type -m\n""")
+            cli_input = input(
+                "Please enter the move you would like to make.\nFor formatting requirements and additional commands, type -h" +
+                "\n\n""")
             if cli_input == '-h':
                 print("""Moves should be of the format <piece><original rank><original file><new rank><new file>.
                 For instance, to move a white pawn from c2 to c4, you would type 'Pc2c4'.
                 To move a black knight from g8 to capture a piece at f6, type 'Hg8xf6'.
                 The 'x' for capturing is not required, but can be included.
-                If the move would move a pawn to the end of the board, append an equals sign followed by the piece"""+\
-                """you would like to promote the pawn to (e.x. Pc7c8=Q)
-                Castling is denoted by 0-0 (kingside) or 0-0-0 (queenside). 
-                """)
-            elif cli_input in ['-m','--moves']:
+                If the move would move a pawn to the end of the board, append an equals sign followed by the piece""" + \
+                      """you would like to promote the pawn to (e.x. Pc7c8=Q)
+                      Castling is denoted by 0-0 (kingside) or 0-0-0 (queenside).
+                      Additional commands:
+                      -m,--moves : lists all legal moves at this board state, with proper formatting.
+                      -u,--undo  : undo the previous two moves, reverting the board back to previous state. 
+                                   Note that due to memory constraints, a limited number of consecutive undos can be performed.
+                      -p,--pieces: lists  
+                      -e,--exit  : exits the program
+                      """)
+            elif cli_input in ['-m', '--moves']:
                 for valid_move in self.board.get_all_moves(self.player_to_move):
-                    print(valid_move,end=', ')
-            elif cli_input in ['-e','exit','--exit']:
+                    print(valid_move, end=', ')
+            elif cli_input in ['-p','--pieces','-P']:
+                self.print_material(print_positions=(cli_input == '-P'))
+            elif cli_input in ['-e', 'exit', '--exit']:
                 sys.exit(0)
-            elif cli_input in ['-u','--undo','undo']:
+            elif cli_input in ['-u', '--undo', 'undo']:
                 length = len(self.recent_board_states)
                 if length == 0:
                     print('Maximum number of undos reached.')
@@ -138,15 +152,15 @@ class ChessGame:
             return
         valid_moves = piece_to_move.get_valid_moves(self.board, src)
         if move not in valid_moves:
-            print(f'Invalid input received: piece at {xy_to_rf(src)} cannot legally move to {xy_to_rf(dest)},'+\
-            'or you aren\'t specifying the piece type in a pawn promotion.')
+            print(f'Invalid input received: piece at {xy_to_rf(src)} cannot legally move to {xy_to_rf(dest)},' + \
+                  'or you aren\'t specifying the piece type in a pawn promotion.')
             return
         successor = self.board.create_successor_board(move)
         if is_check(successor, self.player_to_move):
             print(f'Invalid input received: move from {xy_to_rf(src)} to {xy_to_rf(dest)} ' +
                   f'would put {self.get_player_to_move(as_string=True)} in check.')
             return
-        if isinstance(successor.piece_at(*move.dest),chess_piece.Pawn) and move.dest[0] in (0,8):
+        if isinstance(successor.piece_at(*move.dest), chess_piece.Pawn) and move.dest[0] in (0, 8):
             print(f'Invalid input recieved: pawn in illegal location after move processed.')
             print('If this move puts a pawn at the end of the board, make sure you specify the promotion type')
             return
@@ -161,14 +175,28 @@ class ChessGame:
             self.fifty_move_rule_counter = 0
         else:
             self.fifty_move_rule_counter += 1
+
+    def print_material(self, print_positions=False):
+        white_pieces = self.board.get_pieces(Color.WHITE)
+        black_pieces = self.board.get_pieces(Color.BLACK)
+        print('WHITE:')
+        for white_piece in white_pieces:
+            if print_positions:
+                print(f'{white_piece.__class__} at {convert_int_to_rank_file(white_piece.get_loc())}',end=', ')
+            else:
+                print(white_piece.__class__)
+        print('BLACK:')
+        for black_piece in black_pieces:
+            if print_positions:
+                print(f'{black_piece.__class__} at {convert_int_to_rank_file(black_piece.get_loc())}',end=', ')
+
     def is_threefold_repetition(self):
         if len(self.recent_board_states) <= self.max_states_kept:
             return False
         for state in self.recent_board_states:
-            if self.recent_board_states.count(state) >= 3:
+            if self.recent_board_states.count(state) >= self.max_repetition:
                 return True
         return False
-
 
     def get_player_to_move(self, as_string=False):
         if as_string:
@@ -176,58 +204,64 @@ class ChessGame:
         else:
             return self.player_to_move
 
+
 def get_agent_from_string(agent_name):
-    agents = {'RandomAgent': RandomAgent,'PieceValueAgent':PieceValueAgent,
-              'FixedRandomAgent':FixedRandomAgent,'LocationAgent':PieceLocationAgent,'MichniewskiAgent':MichniewskiAgent}
+    agents = {'RandomAgent': RandomAgent, 'PieceValueAgent': PieceValueAgent,
+              'FixedRandomAgent': FixedRandomAgent, 'LocationAgent': PieceLocationAgent,
+              'MichniewskiAgent': MichniewskiAgent}
     try:
 
         return agents[agent_name]
     except KeyError as e:
-        print(f'ERROR: invalid AI agent specified. List of accepted agents:',end=' ')
+        print(f'ERROR: invalid AI agent specified. List of accepted agents:', end=' ')
         for key in agents.keys():
-            print(key,end=' ')
+            print(key, end=' ')
         print('Exiting...')
         sys.exit(0)
 
+
 class Analysis(ChessGame):
     """Used for analysis by the author, please ignore this code."""
-    def __init__(self,**args):
+
+    def __init__(self, **args):
 
         self.time_per_move = []
-        self.board_states=[]
+        self.board_states = []
         self.OUT_DIR = 'analysis'
         curr_time = time.gmtime()
-        timestamp = '-'.join([str(i) for i in curr_time[1:3]])+'_'+'-'.join([str(i) for i in curr_time[3:6]])
+        timestamp = '-'.join([str(i) for i in curr_time[1:3]]) + '_' + '-'.join([str(i) for i in curr_time[3:6]])
         if args['outfile'] is None:
             self.basefile_name = f'{self.OUT_DIR}/{timestamp}-{args["white-agent"]}-{args["black-agent"]}'
         else:
             self.basefile_name = f'{timestamp}-{args["outfile"]}'
-        self.outfile_name = self.OUT_DIR+'/'+self.basefile_name+'.txt'
+        self.outfile_name = self.OUT_DIR + '/' + self.basefile_name + '.txt'
         print(f'Output sent to {self.outfile_name}')
 
-        self.agent_to_track = Color.WHITE if args['track_white'] else Color.BLACK #todo add option to specify tracking of white OR black
-        args['logfile'] = self.OUT_DIR+'/'+self.basefile_name+'_LOG.txt'
+        self.agent_to_track = Color.WHITE if args[
+            'track_white'] else Color.BLACK  # todo add option to specify tracking of white OR black
+        args['logfile'] = self.OUT_DIR + '/' + self.basefile_name + '_LOG.txt'
         print(f'Logs found at {args["logfile"]}')
         orig_stdout = sys.stdout
         sys.stdout = open(self.outfile_name, 'a')
         ChessGame.__init__(self, **args)
+
     def run_game(self):
         ChessGame.run_game(self)
-        avg = sum(self.time_per_move)/len(self.time_per_move)
+        avg = sum(self.time_per_move) / len(self.time_per_move)
         mintime = min(self.time_per_move)
         maxtime = max(self.time_per_move)
         if self.winner is None:
-            print(f'SUMMARY: stalemate reached in {self.turn_num} moves,'+\
+            print(f'SUMMARY: stalemate reached in {self.turn_num} moves,' + \
                   f'with an average time per move of {avg}, a min time of {mintime} and max time of {maxtime}')
         else:
-            print(f'SUMMARY: {self.winner} beat {~self.winner} in {self.turn_num} moves, '+\
-                f'with an average time per move of {avg}, a min time of {mintime} and a max time of {maxtime}')
+            print(f'SUMMARY: {self.winner} beat {~self.winner} in {self.turn_num} moves, ' + \
+                  f'with an average time per move of {avg}, a min time of {mintime} and a max time of {maxtime}')
 
     def get_next_move(self):
         start = time.time()
         move = ChessGame.get_next_move(self)
         stop = time.time()
-        delta = stop-start
+        delta = stop - start
         if self.player_to_move == self.agent_to_track:
             self.time_per_move.append(delta)
             print(f'Time to move: {delta}')
