@@ -11,7 +11,7 @@ class AbstractMinimaxAgent(Agent):
     """Abstract minimax agent that all minimax agents use as a superclass"""
     DEFAULT_MAX_DEPTH = 4  # depth increases each time min value is called from within max value or vice versa
 
-    STALEMATE_VAL = -1  # could be set to zero but we want to avoid selecting a move that results in stalemate when all
+    STALEMATE_VAL = -5  # could be set to zero but we want to avoid selecting a move that results in stalemate when all
     # moves have 0 utility value
     WIN_VAL = math.inf
     LOSE_VAL = -math.inf
@@ -75,7 +75,7 @@ class AbstractMinimaxAgent(Agent):
             return self.LOSE_VAL
         if self.is_tie(state):
             return self.STALEMATE_VAL
-        if curr_depth == self.max_depth:
+        if curr_depth >= self.max_depth:
             score = self.evaluation_function(state, self.color)
             # print(f'Depth = {curr_depth} score = {score}')
             return score
@@ -108,7 +108,7 @@ class AbstractMinimaxAgent(Agent):
             return self.LOSE_VAL
         if self.is_tie(state):
             return self.STALEMATE_VAL
-        if curr_depth == self.max_depth:
+        if curr_depth >= self.max_depth:
             score = self.evaluation_function(state, self.color)
             # print(f'Depth = {curr_depth} score = {score}')
             return score

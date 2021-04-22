@@ -20,11 +20,21 @@ class ChessGame:
         self.white_AI = None
         self.black_AI = None
         self.winner = None
+
         self.UNDO_VALUE = 'undo'
-        if args['white-agent'] is not None:
-            self.white_AI = get_agent_from_string(args['white-agent'])(color=Color.WHITE, **args)
-        if args['black-agent'] is not None:
-            self.black_AI = get_agent_from_string(args['black-agent'])(color=Color.BLACK, **args)
+        if args['use-white-ai']:
+            white_ai_type = PieceLocationAgent if args['white-agent'] is None else \
+                get_agent_from_string(args['white-agent'],Color.WHITE)
+            self.white_AI = white_ai_type(color=Color.WHITE,**args)
+        if args['use-black-ai']:
+            black_ai_type = PieceLocationAgent if args['black-agent'] is None else \
+                get_agent_from_string(args['black-agent'], Color.BLACK)
+            self.black_AI = black_ai_type(color=Color.BLACK, **args)
+
+        # if args['white-agent'] is not None:
+        #     self.white_AI = get_agent_from_string(args['white-agent'])(color=Color.WHITE, **args)
+        # if args['black-agent'] is not None:
+        #     self.black_AI = get_agent_from_string(args['black-agent'])(color=Color.BLACK, **args)
 
         self.player_to_move = Color.WHITE
 
@@ -37,6 +47,7 @@ class ChessGame:
         self.fifty_move_rule_counter = 0  # under FIDE rules, a game is a draw when no player has moved a pawn or captured a piece
         # in the past 50 turns
         self.use_unicode = not (args['no-unicode'])
+        self.test_unicode()
 
     def run_game(self):
         # TODO separate into UI vs command-line run-game types
@@ -47,11 +58,12 @@ class ChessGame:
             # if self.turn_num % 10 == 0:
             #     time.sleep(1.0)
             print('Current Board state:\n')
-            try:
-                print(self.board.display_board(unicode=self.use_unicode))
-            except UnicodeError:
-                self.use_unicode = False
-                print(self.board.display_board(unicode=self.use_unicode))
+            # try:
+            #     self.board.display_board(unicode=self.use_unicode)
+            # except:
+            #     self.use_unicode = False
+            #     self.board.display_board(unicode=self.use_unicode)
+            self.board.display_board(unicode=self.use_unicode)
             if is_checkmate(self.board, self.player_to_move):
                 print(f'{self.player_to_move} is in checkmate. {~self.player_to_move} wins!')
                 self.winner = ~self.player_to_move
@@ -203,9 +215,21 @@ class ChessGame:
             return 'white' if self.player_to_move else 'black'
         else:
             return self.player_to_move
+    def test_unicode(self):
+        try:
+            chars = "♔♕♖♗♘♙"
+            expected = "♔♕♖♗♘♙"
+            # print(sys.stdout.encoding)
+            # sys.
+            actual = chars.encode(sys.stdout.encoding)
+            # self.use_unicode = True
+            self.use_unicode =  expected == actual
+        except:
+            self.use_unicode = False
 
 
-def get_agent_from_string(agent_name):
+def get_agent_from_string(agent_name,color):
+    color_string = 'white' if color else 'black'
     agents = {'RandomAgent': RandomAgent, 'PieceValueAgent': PieceValueAgent,
               'FixedRandomAgent': FixedRandomAgent, 'LocationAgent': PieceLocationAgent,
               'MichniewskiAgent': MichniewskiAgent}
@@ -213,11 +237,11 @@ def get_agent_from_string(agent_name):
 
         return agents[agent_name]
     except KeyError as e:
-        print(f'ERROR: invalid AI agent specified. List of accepted agents:', end=' ')
+        print(f'ERROR: invalid AI agent specified for {color_string}. List of accepted agents:', end=' ')
         for key in agents.keys():
             print(key, end=' ')
-        print('Exiting...')
-        sys.exit(0)
+        print(f'\nUsing default AI for {color_string} instead.')
+        return PieceLocationAgent
 
 
 class Analysis(ChessGame):

@@ -1,10 +1,10 @@
 from chess_lib.chess_piece import *
-from colorama import init as colorama_init,Fore,Back,Style
+from colorama import init as colorama_init, deinit as colorama_deinit,Fore,Back,Style
 
 EMPTY_SQUARE_NO_UNICODE = '   '
 EMPTY_SQUARE_UNICODE = '   \u205f'
 WHITE_PIECE_ANSI = Fore.WHITE + Style.BRIGHT
-BLACK_PIECE_ANSI = Fore.BLACK + Style.BRIGHT
+BLACK_PIECE_ANSI = Fore.BLACK
 class Board:
     def __init__(self,dim=8):
         """Constructor"""
@@ -18,7 +18,7 @@ class Board:
         # print(self.grid)
         self.white_pieces = []
         self.black_pieces = []
-        colorama_init(autoreset=True)
+
     def new_game(self):
         """Fills in pieces matching their position in a new game of chess_lib"""
         for c in range(0, 8):
@@ -166,6 +166,7 @@ class Board:
     def display_board(self,unicode=False):
         """Displays board in standard chess_lib format (i.e. with ranks and files) as opposed to the (x,y) coordinate system
         used in implementation. This is used in the CLI output format of the game"""
+        colorama_init(autoreset=True)
         separator = '  \u2005' if unicode else '  '
         header = separator.join(['a','b','c','d','e','f','g','h'])
         output = '   '+header
@@ -176,7 +177,9 @@ class Board:
                 # output_row += '  '  + ('*' if piece is None else (piece.to_char() if chars_only else piece.to_color_char()))
                 output_row += self.grid[row][col].get_ui_output(unicode=unicode)
             output += Style.RESET_ALL+'\n' + output_row.lstrip(' ')
-        return output.lstrip('\n')
+        output = output.lstrip('\n')
+        print(output)
+        colorama_deinit()
     @staticmethod
     def load_from_file(fpath):
         """Loads a board from a file, used in testing"""

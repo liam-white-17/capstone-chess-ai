@@ -2,8 +2,12 @@
 ## Introduction
 This is a chess game with functionality for playing with any combination of human and/or AI players for white or black.
 
-All components were built using python3. Apart from those built in to python, no external libraries were used as of 3/14/21.
-
+All components were built using python3. Some external libraries were used for UI purposes, but all critical components were built by hand.
+## Requirements
+* Python3.9
+* [pip](https://pypi.org/project/pip/)
+* [colorama](https://pypi.org/project/colorama/) (Simply run ```pip install colorama``` from the terminal)
+* [pypy](https://www.pypy.org/) (Optional, but highly recommended to reduce computation time) 
 ## Usage
 Launching a game is straightforward. For a two person human game, simply run as follows:
 ```
@@ -11,6 +15,14 @@ pypy3 chess_ai.py
 ```
 **It is _strongly_ recommended that you use [pypy](https://www.pypy.org/) to run the AI as using the default python interpreter will result in significantly longer waits for the AI to make a move.**
 
+### Quickstart
+If you just want to play against the AI and aren't interested in the additional options, run
+```
+pypy3 chess_ai.py -b 
+```
+This will put you in a game against the 'best' AI available. The AI plays as black; to switch sides and have the AI play as white, replace '-b' with '-w'. 
+
+To watch a game played between two AI's, run ```pypy3 chess_ai.py -b -w```
 
 When first booting up the game, the command line will display a board like the following:
 ```
@@ -49,17 +61,17 @@ The board will then look like this:
 To make determining the input for a move easier, one can run '-m' in the command line for a list of all properly formatted valid moves.
 
 
-To run the game with two random AIs, run with the following commands:
+To run the game with two optimal AIs, run with the following commands:
 ```
-python chess.py --white-agent RandomAgent --black-agent RandomAgent
+python chess_ai.py --white-agent LocationAgent --black-agent LocationAgent
 ```
 To run with only one AI, omit the 'agent' command of your choosing.
 
 Currently, the list of AI agents to chose from includes:
-*RandomAgent: picks a random legal move. Intended as a baseline, obviously pretty easy to beat.
-*FixedRandomAgent: same as RandomAgent except the seed for random.choice() is fixed constant, so FixedRandomAgent will always make the same move in a given board state. Used to compare the decision making of different AIs in a controlled environment.
-*PieceValueAgent: chooses the move that will result in the maximum utility based on the value of each piece on the board. This agent picks the move that will maximize its own piece values while minimizing that of the opponent (though if it has the opportunity to checkmate, it'll just do that instead). 
-*LocationAgent: A WIP agent that maximizes its own piece value as in PieceValueAgent but also chooses moves that put its own pieces in the best possible position on hte board while denying its opponent the chance to do likewise. This agent is NOT finished yet and shouldn't be expected to play optimally.
+* RandomAgent: picks a random legal move. Intended as a baseline, obviously pretty easy to beat.
+* FixedRandomAgent: same as RandomAgent except the seed for random.choice() is fixed constant, so FixedRandomAgent will always make the same move in a given board state. Used to compare the decision making of different AIs in a controlled environment.
+* PieceValueAgent: chooses the move that will result in the maximum utility based on the value of each piece on the board. This agent picks the move that will maximize its own piece values while minimizing that of the opponent (though if it has the opportunity to checkmate, it'll just do that instead). 
+* LocationAgent: The 'best' agent, and likely the one you want to use. Works like PieceValueAgent, except it also weighs the position of pieces on the board in its utility calculation.
 
 
 ## Project structure:
