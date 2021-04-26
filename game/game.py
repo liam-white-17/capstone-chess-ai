@@ -11,7 +11,7 @@ from ai.minimax_agent import *
 
 
 class ChessGame:
-
+    """The UI wrapper through which the user engages in a game of chess."""
     def __init__(self, **args):
         # print(sys.stdout.encoding)
         # sys.stdout = codecs.getwriter('UTF-8')(sys.stdout.buffer.detach())
@@ -57,15 +57,13 @@ class ChessGame:
 
         while 1:
             print(f'Beginning turn {self.turn_num} for {self.get_player_to_move(as_string=True)}')
-            # if self.turn_num % 10 == 0:
-            #     time.sleep(1.0)
+
             print('Current Board state:\n')
-            # try:
-            #     self.board.display_board(unicode=self.use_unicode)
-            # except:
-            #     self.use_unicode = False
-            #     self.board.display_board(unicode=self.use_unicode)
-            self.board.display_board(unicode=self.use_unicode)
+            try:
+                self.board.display_board(unicode=self.use_unicode)
+            except:
+                self.use_unicode = False
+                self.board.display_board(unicode=self.use_unicode)
             if is_checkmate(self.board, self.player_to_move):
                 print(f'{self.player_to_move} is in checkmate. {~self.player_to_move} wins!')
                 self.winner = ~self.player_to_move
@@ -89,6 +87,19 @@ class ChessGame:
                 continue
             else:
                 self.process_move(move)
+        if not isinstance(self,Analysis):
+            response = input('Play again? (y/n):')
+            if response in ['y','Y','yes']:
+                self.board = Board().new_game()
+                self.winner = None
+                self.player_to_move = Color.WHITE
+                self.turn_num = 1
+                self.recent_board_states = []
+                self.fifty_move_rule_counter = 0
+                self.run_game()
+            else:
+                print('Thanks for playing!')
+                sys.exit(0)
 
     def get_next_move(self):
         #print(self.black_AI.evaluation_function(self.board, Color.BLACK))
@@ -118,14 +129,14 @@ class ChessGame:
                       -m,--moves : lists all legal moves at this board state, with proper formatting.
                       -u,--undo  : undo the previous two moves, reverting the board back to previous state. 
                                    Note that due to memory constraints, a limited number of consecutive undos can be performed.
-                      -p,--pieces: lists  
+                      -p,--pieces: lists material (pieces) available to current player.
                       -e,--exit  : exits the program
                       """)
             elif cli_input in ['-m', '--moves']:
                 for valid_move in self.board.get_all_moves(self.player_to_move):
                     print(valid_move, end=', ')
             elif cli_input in ['-p','--pieces','-P']:
-                self.print_material(print_positions=(cli_input == '-P'))
+                self.print_material()
             elif cli_input in ['-e', 'exit', '--exit']:
                 sys.exit(0)
             elif cli_input in ['-u', '--undo', 'undo']:
@@ -184,26 +195,31 @@ class ChessGame:
         self.recent_board_states.append(self.board.__deepcopy__())
         self.board = successor
         self.player_to_move = ~self.player_to_move
-        if self.player_to_move:
+        if self.player_to_move == Color.WHITE:
             self.turn_num += 1
         if isinstance(piece_to_move, Pawn) or move.piece_captured is not None:
             self.fifty_move_rule_counter = 0
         else:
             self.fifty_move_rule_counter += 1
 
-    def print_material(self, print_positions=False):
+    def print_material(self, print_positions=True):
+        class_to_name_map = {Pawn:'Pawn',Knight:'Knight',Bishop:'Bishop',Rook:'Rook',Queen:'Queen',King:'King'}
         white_pieces = self.board.get_pieces(Color.WHITE)
         black_pieces = self.board.get_pieces(Color.BLACK)
         print('WHITE:')
         for white_piece in white_pieces:
             if print_positions:
-                print(f'{white_piece.__class__} at {convert_int_to_rank_file(white_piece.get_loc())}',end=', ')
+                print(f'{class_to_name_map[white_piece.__class__]} at {convert_int_to_rank_file(white_piece.get_loc())}')
             else:
-                print(white_piece.__class__)
+                print(f'{class_to_name_map[white_piece.__class__]}')
         print('BLACK:')
         for black_piece in black_pieces:
             if print_positions:
-                print(f'{black_piece.__class__} at {convert_int_to_rank_file(black_piece.get_loc())}',end=', ')
+                print(f'{class_to_name_map[black_piece.__class__]} at {convert_int_to_rank_file(black_piece.get_loc())}')
+            else:
+                print(f'{class_to_name_map[black_piece.__class__]}')
+
+
 
     def is_threefold_repetition(self):
         if len(self.recent_board_states) <= self.max_states_kept:
@@ -226,7 +242,7 @@ class ChessGame:
             self.use_unicode = expected == actual
             #self.use_unicode =  expected == actual
         except Exception as e:
-            print(e)
+            print(f'Exception generated from attempting to use unicode: {e}. Using ASCII characters instead...')
             self.use_unicode = False
 
 

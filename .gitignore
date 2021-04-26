@@ -1,2 +1,3 @@
-analysis/
-venv/
+analysis/*
+venv/*
+contents.pdf

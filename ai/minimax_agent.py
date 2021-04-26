@@ -167,7 +167,7 @@ class PieceLocationAgent(AbstractMinimaxAgent):
     def __init__(self, **args):
         AbstractMinimaxAgent.__init__(self, **args)
         self.evaluation_function = lambda _state, _color: piece_location_evaluation(_state, _color,
-                                                                                    DUMMY_LOCATION_VALUES) + piece_value_evaluation(
+                                                                                    DEFAULT_LOCATION_VALUES) + piece_value_evaluation(
             _state, _color, piece_values=DEFAULT_PIECE_VALUE_MAPPING)
 
 

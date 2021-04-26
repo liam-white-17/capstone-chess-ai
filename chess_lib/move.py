@@ -33,10 +33,6 @@ class Move:
                self.piece_moved == other.piece_moved and \
                self.piece_captured == other.piece_captured
 
-    @staticmethod
-    def create_move_from_board(board, src, dst):
-        """Creates a instance of the move class based on an existing board with source/destination coordinates"""""
-        pass
 
 class Castle(Move):
 

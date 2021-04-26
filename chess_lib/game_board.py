@@ -168,8 +168,7 @@ class Board:
             output += '\n' + board_row.lstrip(' ')
         return output.lstrip('\n')
     def display_board(self,unicode=False):
-        """Displays board in standard chess_lib format (i.e. with ranks and files) as opposed to the (x,y) coordinate system
-        used in implementation. This is used in the CLI output format of the game"""
+        """Displays the board for use in the CLI. The unicode parameter specifies whether to use unicode characters or ASCII"""
         colorama_init(autoreset=True)
 
         separator = '  '
@@ -178,14 +177,11 @@ class Board:
         for row in range(7, -1, -1):
             output_row = str(row+1)+' '
             for col in range(0, 8):
-                # piece = self.grid[row][col].get_piece()
-                # output_row += '  '  + ('*' if piece is None else (piece.to_char() if chars_only else piece.to_color_char()))
+
                 output_row += self.grid[row][col].get_ui_output(unicode=unicode)+Style.RESET_ALL
             output += Style.RESET_ALL+'\n' + output_row.lstrip(' ')+Style.RESET_ALL
         output = output.lstrip('\n')
-        # have to modify sys.stdout to get unicode to display properly with pypy, need to back it up
-        stdout_backup = sys.stdout
-        #sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
+
         print(output+'\n')
 
         colorama_deinit()
@@ -211,9 +207,7 @@ class Board:
                 piece_type = get_piece_type_from_string(chr)
                 if piece_type is not None:
                     board.grid[7 - rank][file].add_piece(piece_type(is_white=(chr == chr.upper()),loc=(7-rank,file)))
-                # if piece_type == King:
-                #     color = Color.WHITE if chr.isupper() else Color.BLACK
-                #     #board.king_locations[color] = (7-rank,file)
+
         board.set_piece_locations()
         return board
     def __deepcopy__(self, memodict={}):
@@ -223,8 +217,7 @@ class Board:
             for col in range(0,8):
                 piece = self.square_at(row,col).get_piece()
                 board.square_at(row,col).add_piece(piece.__deepcopy__() if piece is not None else None)
-        # board.king_locations[Color.WHITE] = self.king_locations[Color.WHITE]
-        # board.king_locations[Color.BLACK] = self.king_locations[Color.BLACK]
+
         board.white_pieces = [piece.__deepcopy__() for piece in self.white_pieces]
         board.black_pieces = [piece.__deepcopy__() for piece in self.black_pieces]
 
@@ -232,8 +225,7 @@ class Board:
 
 
 class GridSpace:
-    """A class used to represent a cell on the chess_lib board. Though not particularly useful now, this class is implemented
-    for UI considerations"""
+    """A class used to represent a cell on the chess_lib board. Used mostly for UI reasons"""
     def __init__(self, loc):
         r, c = loc
         self.loc = loc
@@ -248,17 +240,15 @@ class GridSpace:
         """Returns true if no piece is within this grid space, false otherwise"""
         return self.piece is None
     def get_ui_output(self,unicode=False):
+        """Returns the ASCII or unicode representation of this gridspace for use in the CLI when playing the game."""
         background_color = (Back.YELLOW if self.color else Back.RED)  # yellow is used for white/beige squares, red for black/maroon squares
 
         if self.piece is None:
             return background_color + (EMPTY_SQUARE_UNICODE if unicode else EMPTY_SQUARE_NO_UNICODE)
         else:
-            # if unicode:
-            #     return background_color + self.piece.to_unicode()
-            # else:
+
             if unicode:
-                # for some reason, using Fore.BLACK and Fore.WHITE displays the opposite color when attempting to represent unicode characters
-                # so the != is used instead
+
                 foreground_color = (WHITE_PIECE_ANSI if self.piece.get_color() == Color.WHITE else BLACK_PIECE_ANSI) + Style.BRIGHT
                 piece_char = ('\u2004' + self.piece.to_unicode() + '\u2004')
             else:

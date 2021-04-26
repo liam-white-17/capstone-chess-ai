@@ -23,7 +23,7 @@ class Piece:
     @abstractmethod
     def get_valid_moves(self, board, full_recursion=True):
         """Returns valid moves (and captures) on the board for this piece at the given grid location.
-        Note that this does not take into account whether the move would put the current player's king in check"""
+        Note that this does not take into account whether the move would put the current player's king in check--this is handled externally"""
         return []
 
     def get_color(self):
@@ -40,11 +40,12 @@ class Piece:
         return self.to_char()
 
     def to_char(self):
-        # return self.name.upper() if self.color == Color.WHITE else self.name.lower()
+        """Returns the ASCII representation of this piece for use on the board"""
         return self.name
 
 
     def to_unicode(self):
+        """Returns the Unicode representation of this piece on the board."""
         return self.white_unicode if self.color else self.black_unicode
 
     def __eq__(self, other):
@@ -71,7 +72,7 @@ class Pawn(Piece):
     black_unicode = '♟'
 
     def get_valid_moves(self, board, full_recursion=True):
-        # Pawn moves for rules are different, making it difficult to use the is_valid method from util
+        # Pawn moves for rules are different, making it difficult to use the is_valid method from chess_utils
         moves = []
         rank, file = self.row, self.col
         direction = 1 if self.color else -1
@@ -198,6 +199,7 @@ class King(Piece):
 
 
 def create_diagonal_moves(board, grid_loc, color):
+    """Returns all possible diagonal moves (i.e. those a bishop could make) from the current board"""
     move_list = []
     rank, file = grid_loc[0] + 1, grid_loc[1] + 1
     while is_valid(rank, file, board, color):
@@ -231,6 +233,7 @@ def create_diagonal_moves(board, grid_loc, color):
 
 
 def create_orthogonal_moves(board, grid_loc, color):
+    """As in create_diagonal moves, except moving along rows/columns like a rook"""
     move_list = []
     rank, file = grid_loc[0], grid_loc[1] + 1
     while is_valid(rank, file, board, color):
@@ -261,12 +264,13 @@ def create_orthogonal_moves(board, grid_loc, color):
 
 
 def get_piece_type_from_string(char):
+    """Converts an ASCII character to its piece type"""
     mydict = {'p': Pawn, 'n': Knight, 'b': Bishop, 'r': Rook, 'q': Queen, 'k': King, '*': None}
     return mydict[char.lower()]
 
 def create_move_from_str(board, str:str,player_to_move):
-    """Creates a move from a string that's (loosely) based on standard algebraic notation for chess_lib moves.
-    This method has to be in this file to avoid a circular import"""
+    """Creates a move from a string that's (loosely) based on standard algebraic notation for chessvmoves.
+    To avoid circular imports, this method must be in this file"""
     if str in ['0-0','0-0-0']:
         loc = board.get_king_location(player_to_move)
         king = board.piece_at(*loc)

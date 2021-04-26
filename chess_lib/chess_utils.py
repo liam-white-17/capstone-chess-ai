@@ -1,4 +1,5 @@
 from enum import Enum
+
 class Color(Enum):
     """Represents the colors of pieces on the board and the corresponding player who controls them"""
 
@@ -22,12 +23,14 @@ def is_valid(rank,file,board,color):
     return piece is None or piece.get_color() != color
 
 def is_capture(rank,file,board,color):
+    """Returns whether a move to (rank, file) is a capture of the opposing piece"""
     if not is_valid(rank,file,board,color):
         return False
     piece = board.square_at(rank,file).get_piece()
     return piece is not None and piece.get_color() != color
 
 def convert_rank_file_to_int(rank_file):
+    """Converts algebraic chess notation to integer-based index"""
     rank,file=int(rank_file[1]),rank_file[0]
     if rank < 1 or rank > 8:
         raise ValueError(f'rank of {rank} outside of legal values (1,2...8)')
@@ -39,6 +42,7 @@ def convert_rank_file_to_int(rank_file):
     return (row,col)
 
 def convert_int_to_rank_file(loc):
+    """Opposite of convert_rank_file_to_int"""
     row,col=loc
     rank=row+1
     file_mapping='abcdefgh'
@@ -47,26 +51,26 @@ def convert_int_to_rank_file(loc):
 
 
 def is_check(board,player_to_move):
+    """Returns true if player_to_move is in check, false otherwise"""
     pieces = board.get_pieces(~player_to_move)
     king_loc = board.get_king_location(player_to_move)
-    # moves = board.get_all_moves(~player_to_move,no_moves_to_check=False,full_recursion=False)
-    # for move in moves:
-    #     if move.dest == king_loc:
-    #         return True
-    # return False
+
     for piece in pieces:
         for move in piece.get_valid_moves(board,full_recursion=False):
             if move.dest == king_loc:
                 return True
     return False
 def is_checkmate(board,player_to_move):
+    """Returns true if player_to_move is in check, fals eotherwise"""
     return is_check(board,player_to_move) and no_valid_moves(board,player_to_move)
 
 def is_stalemate(board,player_to_move):
+    """Returns whether winning is possible for either side"""
     if len(board.get_pieces(player_to_move)) == 1 and len(board.get_pieces(~player_to_move)) == 1:
         return True
     return no_valid_moves(board,player_to_move) and not is_check(board,player_to_move)
 def no_valid_moves(board,player_to_move):
+    """Returns whether ANY move can legally be made by player_to_move"""
     pieces = board.get_pieces(player_to_move)
     # return len(board.get_all_moves(player_to_move,no_moves_to_check=True,full_recursion=True)) == 0
     for piece in pieces:
