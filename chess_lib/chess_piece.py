@@ -45,7 +45,7 @@ class Piece:
 
 
     def to_unicode(self):
-        return self.black_unicode #if self.color else self.black_unicode
+        return self.white_unicode if self.color else self.black_unicode
 
     def __eq__(self, other):
         return other.name == self.name and self.color == other.color and self.row == other.row and self.col == other.col
@@ -280,7 +280,7 @@ def create_move_from_str(board, str:str,player_to_move):
         if not can_castle:
             raise ValueError('Board does not meet requirements for castling')
 
-    regex = re.compile('[phbrqkPHBRQK][abcdefgh][1-8]x?[abcdefgh][1-8](=[hbrqHBRQ])?')
+    regex = re.compile('[pnbrqkPNBRQK][abcdefgh][1-8]x?[abcdefgh][1-8](=[nbrqNBRQ])?')
     if regex.fullmatch(str) is None:
         raise ValueError(f'{str} does not match accepted chess_lib notation')
 
@@ -289,7 +289,7 @@ def create_move_from_str(board, str:str,player_to_move):
 
     src = convert_rank_file_to_int(str[1:3])
     dest = convert_rank_file_to_int(str[3:5])
-    pawn_regex = re.compile('=[hbrqHBRQ]')
+    pawn_regex = re.compile('=[nbrqNBRQ]')
     match = pawn_regex.match(str[-2:])
     if match is not None:
         return PawnPromotion(board,src,dest,player_to_move,new_piece_type=get_piece_type_from_string(str[-1]))

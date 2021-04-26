@@ -1,12 +1,15 @@
+# -*- coding: utf-8 -*-
 from chess_lib.chess_piece import *
 from colorama import init as colorama_init, deinit as colorama_deinit,Fore,Back,Style
+import sys,codecs
 
 EMPTY_SQUARE_NO_UNICODE = '   '
-EMPTY_SQUARE_UNICODE = '   \u205f'
-WHITE_PIECE_ANSI = Fore.WHITE + Style.BRIGHT
+EMPTY_SQUARE_UNICODE = '   '
+WHITE_PIECE_ANSI = Fore.WHITE
 BLACK_PIECE_ANSI = Fore.BLACK
 class Board:
     def __init__(self,dim=8):
+        #sys.stdout.reconfigure(encoding='utf-8')
         """Constructor"""
         self.grid = list()
         self.dim = dim
@@ -18,6 +21,7 @@ class Board:
         # print(self.grid)
         self.white_pieces = []
         self.black_pieces = []
+
 
     def new_game(self):
         """Fills in pieces matching their position in a new game of chess_lib"""
@@ -167,7 +171,8 @@ class Board:
         """Displays board in standard chess_lib format (i.e. with ranks and files) as opposed to the (x,y) coordinate system
         used in implementation. This is used in the CLI output format of the game"""
         colorama_init(autoreset=True)
-        separator = '  \u2005' if unicode else '  '
+
+        separator = '  '
         header = separator.join(['a','b','c','d','e','f','g','h'])
         output = '   '+header
         for row in range(7, -1, -1):
@@ -175,10 +180,14 @@ class Board:
             for col in range(0, 8):
                 # piece = self.grid[row][col].get_piece()
                 # output_row += '  '  + ('*' if piece is None else (piece.to_char() if chars_only else piece.to_color_char()))
-                output_row += self.grid[row][col].get_ui_output(unicode=unicode)
-            output += Style.RESET_ALL+'\n' + output_row.lstrip(' ')
+                output_row += self.grid[row][col].get_ui_output(unicode=unicode)+Style.RESET_ALL
+            output += Style.RESET_ALL+'\n' + output_row.lstrip(' ')+Style.RESET_ALL
         output = output.lstrip('\n')
-        print(output)
+        # have to modify sys.stdout to get unicode to display properly with pypy, need to back it up
+        stdout_backup = sys.stdout
+        #sys.stdout = codecs.getwriter('utf-8')(sys.stdout.detach())
+        print(output+'\n')
+
         colorama_deinit()
     @staticmethod
     def load_from_file(fpath):
@@ -247,8 +256,14 @@ class GridSpace:
             # if unicode:
             #     return background_color + self.piece.to_unicode()
             # else:
-            foreground_color = WHITE_PIECE_ANSI if self.piece.color else BLACK_PIECE_ANSI
-            piece_char = ('\u2005\u200A'+self.piece.to_unicode() + '\u2004\u200A') if unicode else f' {self.piece.to_char()} '
+            if unicode:
+                # for some reason, using Fore.BLACK and Fore.WHITE displays the opposite color when attempting to represent unicode characters
+                # so the != is used instead
+                foreground_color = (WHITE_PIECE_ANSI if self.piece.get_color() == Color.WHITE else BLACK_PIECE_ANSI) + Style.BRIGHT
+                piece_char = ('\u2004' + self.piece.to_unicode() + '\u2004')
+            else:
+                foreground_color = (WHITE_PIECE_ANSI + Style.BRIGHT) if self.piece.get_color() == Color.WHITE else BLACK_PIECE_ANSI
+                piece_char =  f' {self.piece.to_char()} '
             return background_color + foreground_color + piece_char
             # piece_char = self.piece.to_unicode() if unicode else f' {self.piece.to_char()} '
             # return background_color + foreground_color + piece_char

@@ -3,25 +3,29 @@
 This is a chess game with functionality for playing with any combination of human and/or AI players for white or black.
 
 All components were built using python3. Some external libraries were used for UI purposes, but all critical components were built by hand.
+##Table of Contents:
+* Requirements
+* Installation
+* Quickstart
 ## Requirements
 * Python3.9
 * [pip](https://pypi.org/project/pip/)
-* [colorama](https://pypi.org/project/colorama/) (Simply run ```pip install colorama``` from the terminal)
-* [pypy](https://www.pypy.org/) (Optional, but highly recommended to reduce computation time) 
-## Usage
-Launching a game is straightforward. For a two person human game, simply run as follows:
-```
-pypy3 chess_ai.py
-```
-**It is _strongly_ recommended that you use [pypy](https://www.pypy.org/) to run the AI as using the default python interpreter will result in significantly longer waits for the AI to make a move.**
+* [pypy](https://www.pypy.org/) (Optional, but HIGHLY recommended to reduce computation time) 
+
+## Installation 
+Before the project can be launched, external libraries must first be installed. This can be done by navigating to the directory from the terminal, and running
+```pip install -r requirements.txt```
 
 ### Quickstart
 If you just want to play against the AI and aren't interested in the additional options, run
 ```
-pypy3 chess_ai.py -b 
+pypy3 chess_ai.py -b --no-unicode
 ```
+
+
 This will put you in a game against the 'best' AI available. The AI plays as black; to switch sides and have the AI play as white, replace '-b' with '-w'. 
 
+**It is _strongly_ recommended that you use [pypy](https://www.pypy.org/) to run the AI as using the default python interpreter will result in significantly longer waits for the AI to make a move.**
 To watch a game played between two AI's, run ```pypy3 chess_ai.py -b -w```
 
 When first booting up the game, the command line will display a board like the following:

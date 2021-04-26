@@ -11,8 +11,9 @@ class AbstractMinimaxAgent(Agent):
     """Abstract minimax agent that all minimax agents use as a superclass"""
     DEFAULT_MAX_DEPTH = 4  # depth increases each time min value is called from within max value or vice versa
 
-    STALEMATE_VAL = -5  # could be set to zero but we want to avoid selecting a move that results in stalemate when all
-    # moves have 0 utility value
+    STALEMATE_VAL = -150  # intuitively this would be zero, but we only want the AI to attempt a stalemate when there's almost no chance of winning,
+    # and having the utility value of stalemate be zero would cause it to try for a stalemate when it finds itself in a position with negative utility value
+
     WIN_VAL = math.inf
     LOSE_VAL = -math.inf
 
@@ -20,7 +21,6 @@ class AbstractMinimaxAgent(Agent):
         Agent.__init__(self, **args)
         self.max_depth = args['depth'] if 'depth' in args else self.DEFAULT_MAX_DEPTH
         self.evaluation_function = None
-        self.heuristic = simple_heuristic
         if 'logfile' in args:
             logging.basicConfig(filename=args['logfile'], level=logging.DEBUG, filemode='a')
         else:
@@ -38,7 +38,7 @@ class AbstractMinimaxAgent(Agent):
         moves = []
         for piece in board.get_pieces(self.color):
             moves.extend([move for move in piece.get_valid_moves(board)])
-        moves.sort(key=self.heuristic)
+        #moves.sort(key=self.heuristic)
         for curr_move in moves:
             successor = board.create_successor_board(curr_move)
             if is_check(successor, self.color):
@@ -179,5 +179,4 @@ class MichniewskiAgent(AbstractMinimaxAgent):
             _state, _color, piece_values=MICHNIEWSKI_PIECE_VALUES)
 
 
-def simple_heuristic(move):
-    return 1 if move.piece_captured is not None else -1
+

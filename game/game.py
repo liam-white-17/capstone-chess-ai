@@ -1,18 +1,22 @@
+# -*- coding: utf-8 -*-
+import codecs
 import sys, time
-from util import Stack
 from chess_lib import chess_piece
 from chess_lib.game_board import Board
 from chess_lib.chess_utils import Color, convert_int_to_rank_file as xy_to_rf, convert_rank_file_to_int as rf_to_xy, \
     is_check, is_checkmate, no_valid_moves
-from chess_lib.move import Move
 from ai.agent import *
 from ai.minimax_agent import *
-from os import getcwd
+
 
 
 class ChessGame:
 
     def __init__(self, **args):
+        # print(sys.stdout.encoding)
+        # sys.stdout = codecs.getwriter('UTF-8')(sys.stdout.buffer.detach())
+        # print(sys.stdout)
+        sys.stdout = open(sys.stdout.fileno(), mode='w', encoding='utf8', buffering=1)
         self.board = Board().new_game() if 'load_file' not in args or args['load_file'] is None \
             else Board.load_from_file(args['load_file'])
         # setting AI as None indicates that the color white/black is human controlled
@@ -31,14 +35,10 @@ class ChessGame:
                 get_agent_from_string(args['black-agent'], Color.BLACK)
             self.black_AI = black_ai_type(color=Color.BLACK, **args)
 
-        # if args['white-agent'] is not None:
-        #     self.white_AI = get_agent_from_string(args['white-agent'])(color=Color.WHITE, **args)
-        # if args['black-agent'] is not None:
-        #     self.black_AI = get_agent_from_string(args['black-agent'])(color=Color.BLACK, **args)
 
         self.player_to_move = Color.WHITE
 
-        self.no_graphics = True  # TODO add command-line options to enable UI (once UI is completed)
+        self.no_graphics = True
 
         self.turn_num = 1
         self.recent_board_states = []
@@ -47,10 +47,12 @@ class ChessGame:
         self.fifty_move_rule_counter = 0  # under FIDE rules, a game is a draw when no player has moved a pawn or captured a piece
         # in the past 50 turns
         self.use_unicode = not (args['no-unicode'])
-        self.test_unicode()
+        if self.use_unicode:
+            self.test_unicode() #checks to see if unicode is possible
+
 
     def run_game(self):
-        # TODO separate into UI vs command-line run-game types
+
         print('Launching new game of chess...')
 
         while 1:
@@ -89,6 +91,7 @@ class ChessGame:
                 self.process_move(move)
 
     def get_next_move(self):
+        #print(self.black_AI.evaluation_function(self.board, Color.BLACK))
         if self.player_to_move == Color.WHITE and self.white_AI is not None:
             print('Calculating, this may take a while...')
             return self.white_AI.get_next_move(self.board)
@@ -219,12 +222,11 @@ class ChessGame:
         try:
             chars = "♔♕♖♗♘♙"
             expected = "♔♕♖♗♘♙"
-            # print(sys.stdout.encoding)
-            # sys.
-            actual = chars.encode(sys.stdout.encoding)
-            # self.use_unicode = True
-            self.use_unicode =  expected == actual
-        except:
+            actual = chars.encode(sys.stdout.encoding).decode('utf-8')
+            self.use_unicode = expected == actual
+            #self.use_unicode =  expected == actual
+        except Exception as e:
+            print(e)
             self.use_unicode = False
 
 
@@ -262,7 +264,7 @@ class Analysis(ChessGame):
         print(f'Output sent to {self.outfile_name}')
 
         self.agent_to_track = Color.WHITE if args[
-            'track_white'] else Color.BLACK  # todo add option to specify tracking of white OR black
+            'track_white'] else Color.BLACK
         args['logfile'] = self.OUT_DIR + '/' + self.basefile_name + '_LOG.txt'
         print(f'Logs found at {args["logfile"]}')
         orig_stdout = sys.stdout

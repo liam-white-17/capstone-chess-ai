@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import argparse, sys
 from game import game
 
@@ -35,7 +36,7 @@ parser.add_argument('--no-unicode',
                          'the program will automatically use letters).',
                     action='store_true', dest='no-unicode')
 # these arguments used for analysis of AI speed/optimality. Should not come up in a normal presentation
-parser.add_argument("--load_file",
+parser.add_argument("--load-file",
                     help=argparse.SUPPRESS,
                     nargs='?')
 parser.add_argument('-a', '--analysis', help=argparse.SUPPRESS,
