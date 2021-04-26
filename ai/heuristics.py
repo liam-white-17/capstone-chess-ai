@@ -5,7 +5,7 @@ import math
 
 from chess_lib.chess_utils import *
 from chess_lib.chess_piece import *
-# based on universally approved
+# based on widely accepted value of pieces in chess theory, see https://en.wikipedia.org/wiki/Chess_piece_relative_value#Standard_valuations
 DEFAULT_PIECE_VALUE_MAPPING = {Pawn: 10, Knight: 30, Bishop: 30, Rook: 50, Queen: 90, King: 900}
 
 

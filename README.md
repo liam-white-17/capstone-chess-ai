@@ -9,12 +9,26 @@ All components were built using python3. Some external libraries were used for U
 * Quickstart
 ## Requirements
 * Python3.9
-* [pip](https://pypi.org/project/pip/)
+* [pip](https://pypi.org/project/pip/) (Should normally be installed with pyython)
 * [pypy](https://www.pypy.org/) (Optional, but HIGHLY recommended to reduce computation time) 
 
 ## Installation 
 Before the project can be launched, external libraries must first be installed. This can be done by navigating to the directory from the terminal, and running
 ```pip install -r requirements.txt```
+
+If using [pypy](https://www.pypy.org/) (see below), some additional assembly is required. First, extract the pypy zip file (with all components) to a new directory.
+ 
+Once that is done, run the following commands:
+```path\to\pypy.exe -m ensure pip
+path\to\pypy.exe -m pip install colorama
+```
+
+(OPTIONAL) The program attempts to use unicode characters to represent chess pieces, but this does not work out of the box. While not required for the program to run, using unicode can greatly improve the visual experience of playing the game.
+First, a unicode-compatible command line terminal must be installed. On windows, this can be done through (Windows Terminal)[https://www.microsoft.com/en-us/p/windows-terminal/9n0dx20hk701?activetab=pivot:overviewtab]. Please note that neither Windows Powershell nor the default command line application support unicode at this time.
+Additionally, to enable unicode, language settings must be changed. Follow the instructions (here)[https://www.java.com/en/download/help/locale.html] to do so.
+
+Unicode is not required for the program to work. If you would prefer to have pieces represented by ASCII characters, or you are experiencing issues in displaying unicode characters, run the program with the --no-unicode parameter, like so:
+```path\to\pypy.exe chess_ai.py -b --no-unicode``` or ```python chess_ai.py -b --no-unicode```
 
 ### Quickstart
 If you just want to play against the AI and aren't interested in the additional options, run
@@ -25,7 +39,8 @@ pypy3 chess_ai.py -b --no-unicode
 
 This will put you in a game against the 'best' AI available. The AI plays as black; to switch sides and have the AI play as white, replace '-b' with '-w'. 
 
-**It is _strongly_ recommended that you use [pypy](https://www.pypy.org/) to run the AI as using the default python interpreter will result in significantly longer waits for the AI to make a move.**
+**It is _strongly_ recommended that you use [pypy](https://www.pypy.org/) to run the AI as using the default python interpreter will dramatically increase computation time.**
+
 To watch a game played between two AI's, run ```pypy3 chess_ai.py -b -w```
 
 When first booting up the game, the command line will display a board like the following:
@@ -42,7 +57,7 @@ When first booting up the game, the command line will display a board like the f
 2        P P P P P P P P
 1        R H B Q K B H R
 ```
-White pieces are displayed by a capital letter, while black is displayed in lowercase. To avoid duplicating the K for King, knights are represented with an H for horse.
+White pieces are displayed by a capital letter, while black is displayed in lowercase. To avoid duplicating the K for King, knights are represented with an N.
 To make a move on the board, type the character of the piece to move followed by its original rank/file then its new rank/file.
 For example, to move a pawn to e4, run
 ```
@@ -64,12 +79,7 @@ The board will then look like this:
 ```
 To make determining the input for a move easier, one can run '-m' in the command line for a list of all properly formatted valid moves.
 
-
-To run the game with two optimal AIs, run with the following commands:
-```
-python chess_ai.py --white-agent LocationAgent --black-agent LocationAgent
-```
-To run with only one AI, omit the 'agent' command of your choosing.
+If a mistake is made during play, enter -u or --undo into the terminal to undo the previous two moves. 
 
 Currently, the list of AI agents to chose from includes:
 * RandomAgent: picks a random legal move. Intended as a baseline, obviously pretty easy to beat.
